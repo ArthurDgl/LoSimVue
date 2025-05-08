@@ -1,7 +1,11 @@
 <script>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import BaseComponent from './BaseComponent.vue';
+import { ref } from 'vue';
 
-const GRID_CELL_SIZE = 50.0;
+const GRID_CELL_SIZE = 50;
+
+const LARGE_GRID_CELL_SIZE = 200;
 
 export default {
     data() {
@@ -16,6 +20,8 @@ export default {
             zoomTarget: 1.0,
             zoomPosition: {x: 0, y: 0},
             zoomInterval: null,
+
+            baseComponentsData: [],
         };
     },
     methods: {
@@ -24,16 +30,18 @@ export default {
             this.height = height;
         },
         getColumns() {
+            const cellSize = this.zoom < 0.66 ? LARGE_GRID_CELL_SIZE : GRID_CELL_SIZE;
+
             const worldLeft = this.camera.x;
             const worldRight = this.camera.x + this.width / this.zoom;
-            const startX = Math.floor(worldLeft / GRID_CELL_SIZE) * GRID_CELL_SIZE;
-            const endX = Math.ceil(worldRight / GRID_CELL_SIZE) * GRID_CELL_SIZE;
+            const startX = Math.floor(worldLeft / cellSize) * cellSize;
+            const endX = Math.ceil(worldRight / cellSize) * cellSize;
 
             let columns = [];
-            for (let x = startX; x <= endX; x += GRID_CELL_SIZE) {
+            for (let x = startX; x <= endX; x += cellSize) {
                 columns.push({
                     top: 0,
-                    left: (x - this.camera.x) * this.zoom,
+                    left: (x - this.camera.x) * this.zoom - 1,
                     width: 2,
                     height: this.height
                 });
@@ -41,15 +49,17 @@ export default {
             return columns;
         },
         getRows() {
+            const cellSize = this.zoom < 0.66 ? LARGE_GRID_CELL_SIZE : GRID_CELL_SIZE;
+
             const worldTop = this.camera.y;
             const worldBottom = this.camera.y + this.height / this.zoom;
-            const startY = Math.floor(worldTop / GRID_CELL_SIZE) * GRID_CELL_SIZE;
-            const endY = Math.ceil(worldBottom / GRID_CELL_SIZE) * GRID_CELL_SIZE;
+            const startY = Math.floor(worldTop / cellSize) * cellSize;
+            const endY = Math.ceil(worldBottom / cellSize) * cellSize;
 
             let rows = [];
-            for (let y = startY; y <= endY; y += GRID_CELL_SIZE) {
+            for (let y = startY; y <= endY; y += cellSize) {
                 rows.push({
-                    top: (y - this.camera.y) * this.zoom,
+                    top: (y - this.camera.y) * this.zoom - 1,
                     left: 0,
                     width: this.width,
                     height: 2
@@ -70,6 +80,8 @@ export default {
             this.camera.x -= (currentPos.x - this.draggingPrevious.x) / this.zoom;
             this.camera.y -= (currentPos.y - this.draggingPrevious.y) / this.zoom;
             this.draggingPrevious = currentPos;
+
+            this.alteredCamera();
         },
         stopDrag() {
             this.dragging = false;
@@ -103,6 +115,8 @@ export default {
 
             this.camera.x = worldX - this.zoomPosition.x / this.zoom;
             this.camera.y = worldY - this.zoomPosition.y / this.zoom;
+
+            this.alteredCamera();
         },
         zoomIn() {
             if (this.zoomTarget >= 4) return;
@@ -133,13 +147,36 @@ export default {
             }
 
             this.startZoom();
-        }
+        },
+        newBaseComponent(position, width, height) {
+            this.baseComponentsData.push({
+                position: position,
+                width: width,
+                height: height,
+            });
+        },
+        alteredCamera() {
+            this.updateComponentPositions()
+        },
+        updateComponentPositions() {
+            this.$refs.baseComponents.forEach(component => {
+                component.moveWithCamera(this.camera, this.zoom, this.width, this.height);
+            });
+        },
     },
     emits: ['mounted'],
     mounted() {
+        this.newBaseComponent({x: 175, y: 125}, 100, 50);
+        this.newBaseComponent({x: 375, y: 175}, 100, 100);
+
+        this.$nextTick(() => {this.alteredCamera()});
+
         this.$emit("mounted");
         console.log("CircuitEditor Mounted");
     },
+    components: {
+        BaseComponent
+    }
 }
 </script>
 
@@ -166,6 +203,13 @@ export default {
             <font-awesome-icon :icon="['fas', 'magnifying-glass-minus']" />
         </button>
     </div>
+
+    <BaseComponent
+        v-for="(component, index) in this.baseComponentsData"
+        :key="index"
+        :componentData="component"
+        ref="baseComponents"
+    />
 </template>
 
 <style scoped>
