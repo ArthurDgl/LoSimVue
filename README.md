@@ -6,3 +6,7 @@ First version was prototyped in p5js, this is the official one.
 
 Current Progress (accessible at http://dugnolle.fr:3000) :
 ![image](https://github.com/user-attachments/assets/efe0753a-a85b-4f87-8576-8b5be3ed82a0)
+
+Circuit blocks can be dragged
+Scroll to zoom in & out
+Pan using middle mosue button
