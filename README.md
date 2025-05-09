@@ -13,3 +13,5 @@ Circuit blocks can be dragged
 Scroll to zoom in & out
 
 Pan using middle mouse button
+
+# Limited mobile support
