@@ -68,6 +68,10 @@ export default {
             return rows;
         },
         startDrag(event) {
+            if (event.pointerType === "mouse" && event.button != 1) return;
+
+            document.body.style.cursor = "move";
+
             this.dragging = true;
             this.draggingPrevious = {x: event.clientX, y: event.clientY};
             window.addEventListener("pointermove", this.drag);
@@ -84,6 +88,8 @@ export default {
             this.alteredCamera();
         },
         stopDrag() {
+            document.body.style.cursor = "auto";
+
             this.dragging = false;
             window.removeEventListener("pointermove", this.drag);
             window.removeEventListener("touchmove", this.drag);
@@ -163,6 +169,27 @@ export default {
                 component.moveWithCamera(this.camera, this.zoom, this.width, this.height);
             });
         },
+        worldToScreenCoordinates(coordinates) {
+            return {
+                x: (coordinates.x - this.camera.x) * this.zoom,
+                y: (coordinates.y - this.camera.y) * this.zoom,
+            }
+        },
+        screenToWorldCoordinates(coordinates) {
+            return {
+                x: coordinates.x / this.zoom + this.camera.x,
+                y: coordinates.y / this.zoom + this.camera.y,
+            }
+        },
+        isBoxInBounds(screenPosition, screenWidth, screenHeight) {
+            return !(screenPosition.x > this.width
+                || screenPosition.x + screenWidth < 0
+                || screenPosition.y > this.height
+                || screenPosition.y + screenHeight < 0);
+        },
+        scaleToZoom(property) {
+            return property * this.zoom;
+        },
     },
     emits: ['mounted'],
     mounted() {
@@ -185,7 +212,6 @@ export default {
     :style="{'width':`${this.width}px`, 'height':`${this.height}px`}"
     @pointerdown="this.startDrag"
     @pointerup="this.stopDrag"
-    @mousewheel="this.handleMouseWheel"
     >
         <div v-for="line in this.getColumns().concat(this.getRows())" class="line" :style="{
             'top':`${line.top}px`,

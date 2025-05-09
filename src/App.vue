@@ -17,6 +17,11 @@ export default {
   },
   mounted() {
     window.addEventListener("resize", this.updateDimensions);
+
+    this.$nextTick(() => {
+      window.addEventListener('mousewheel', this.$refs.editor.handleMouseWheel);
+    })
+
     console.log("App Mounted");
   },
   components: {
