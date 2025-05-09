@@ -1,5 +1,6 @@
 ![losimvue](https://github.com/user-attachments/assets/800f7ec9-cd9a-476a-91c9-d065722bb456)
 # Lo Sim Vue (Logic Simulator on Vue)
+(Work In Progress)
 
 This is a web-based logic simulator inspired by Sebastian Lague's videos and my Electronics classes.
 First version was prototyped in p5js, this is the official one.
