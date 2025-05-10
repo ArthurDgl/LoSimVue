@@ -8,7 +8,6 @@ export default {
       height: window.innerHeight,
 
       libraries: [],
-      finishedLoading: false,
     };
   },
   methods: {
@@ -18,7 +17,7 @@ export default {
       this.$refs.editor.setDimensions(this.width, this.height);
     },
     loadLibrary(filename) {
-      return fetch("src/assets/data/" + filename)
+      return fetch("/data/" + filename)
         .then(response => response.json())
         .then(data => {
           return data;
@@ -29,7 +28,7 @@ export default {
         });
     },
     loadLibraries() {
-      fetch("src/assets/data/libraries.json")
+      fetch("/data/libraries.json")
         .then(response => response.json())
         .then(data => {
           this.libraries = data;
@@ -57,7 +56,6 @@ export default {
           console.log("    - " + comp.name);
         });
       });
-      this.finishedLoading = true;
     },
     getLibraryComponent(libraryId, componentName) {
       return this.libraries.filter(lib => {
