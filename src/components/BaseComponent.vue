@@ -23,11 +23,11 @@ export default {
         moveWithCamera() {
             this.screenPosition = this.$parent.worldToScreenCoordinates(this.componentData.position);
 
-            this.screenWidth = this.$parent.scaleToZoom(this.componentData.width);
-            this.screenHeight = this.$parent.scaleToZoom(this.componentData.height);
-
             this.borderRadius = this.$parent.scaleToZoom(DEFAULT_BORDER_RADIUS);
             this.borderWidth = this.$parent.scaleToZoom(DEFAULT_BORDER_WIDTH);
+            
+            this.screenWidth = this.$parent.scaleToZoom(this.componentData.width) - this.borderWidth * 2;
+            this.screenHeight = this.$parent.scaleToZoom(this.componentData.height) - this.borderWidth * 2;
 
             this.visibility = this.$parent.isBoxInBounds(this.screenPosition, this.screenWidth, this.screenHeight) ?
                 "visible" : "hidden";

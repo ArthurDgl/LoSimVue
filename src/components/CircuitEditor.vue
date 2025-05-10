@@ -154,15 +154,31 @@ export default {
 
             this.startZoom();
         },
-        newBaseComponent(position, width, height) {
+        newBaseComponent(behavior, position, width, height) {
             this.baseComponentsData.push({
+                behavior: behavior,
                 position: position,
                 width: width,
                 height: height,
             });
         },
+        newEmptyComponent(position, width, height) {
+            this.newBaseComponent({}, position, width, height);
+        },
+        newLibraryComponent(libraryId, componentName, position) {
+            let behavior = {};
+            let libraryComponent = this.$parent.getLibraryComponent(libraryId, componentName);
+
+            behavior.inputs = libraryComponent.inputs;
+            behavior.outputs = libraryComponent.outputs;
+            behavior.name = libraryComponent.name;
+
+            behavior.resultFunction = eval(libraryComponent.resultFunctionString);
+
+            this.newBaseComponent(behavior, position, libraryComponent.dimensions.width, libraryComponent.dimensions.height);
+        },
         alteredCamera() {
-            this.updateComponentPositions()
+            this.updateComponentPositions();
         },
         updateComponentPositions() {
             this.$refs.baseComponents.forEach(component => {
@@ -190,13 +206,22 @@ export default {
         scaleToZoom(property) {
             return property * this.zoom;
         },
+        onLibrariesLoaded() {
+            this.newLibraryComponent(0, "AND", {x: 400, y: 250});
+
+            this.$nextTick(() => {
+                this.alteredCamera()
+            });
+        },
     },
     emits: ['mounted'],
     mounted() {
-        this.newBaseComponent({x: 175, y: 125}, 100, 50);
-        this.newBaseComponent({x: 375, y: 175}, 100, 100);
+        this.newEmptyComponent({x: 175, y: 125}, 100, 50);
+        this.newEmptyComponent({x: 375, y: 175}, 100, 100);
 
-        this.$nextTick(() => {this.alteredCamera()});
+        this.$nextTick(() => {
+            this.alteredCamera()
+        });
 
         this.$emit("mounted");
         console.log("CircuitEditor Mounted");

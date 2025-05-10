@@ -1,0 +1,62 @@
+[
+    {
+        "name": "AND",
+        "inputs": 2,
+        "outputs": 1,
+        "dimensions": {
+            "width": 50,
+            "height": 50
+        },
+        "resultFunctionString": "(inputValues) => {return inputValues[0] && inputValues[1];}"
+    },
+    {
+        "name": "OR",
+        "inputs": 2,
+        "outputs": 1,
+        "dimensions": {
+            "width": 50,
+            "height": 50
+        },
+        "resultFunctionString": "(inputValues) => {return inputValues[0] || inputValues[1];}"
+    },
+    {
+        "name": "NOT",
+        "inputs": 1,
+        "outputs": 1,
+        "dimensions": {
+            "width": 50,
+            "height": 25
+        },
+        "resultFunctionString": "(inputValues) => {return !inputValues[0];}"
+    },
+    {
+        "name": "XOR",
+        "inputs": 2,
+        "outputs": 1,
+        "dimensions": {
+            "width": 50,
+            "height": 50
+        },
+        "resultFunctionString": "(inputValues) => {return inputValues[0] != inputValues[1];}"
+    },
+    {
+        "name": "NAND",
+        "inputs": 2,
+        "outputs": 1,
+        "dimensions": {
+            "width": 50,
+            "height": 50
+        },
+        "resultFunctionString": "(inputValues) => {return !inputValues[0] || !inputValues[1];}"
+    },
+    {
+        "name": "NOR",
+        "inputs": 2,
+        "outputs": 1,
+        "dimensions": {
+            "width": 50,
+            "height": 50
+        },
+        "resultFunctionString": "(inputValues) => {return !inputValues[0] && !inputValues[1];}"
+    }
+]

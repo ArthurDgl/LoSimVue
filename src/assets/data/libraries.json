@@ -1,0 +1,9 @@
+[
+    {
+        "name": "Logic Gates",
+        "id": 0,
+        "type": "native",
+        "file": "gates.json",
+        "description": "Contains the basic logic gates : AND, OR, NOT, XOR, NAND, NOR"
+    }
+]
