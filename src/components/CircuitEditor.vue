@@ -354,6 +354,7 @@ export default {
     flex-direction: row;
     justify-content: center;
     align-items: center;
+    z-index: 10;
 }
 
 button {
