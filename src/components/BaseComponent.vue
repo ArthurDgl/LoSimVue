@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
 const DEFAULT_BORDER_RADIUS = 10;
 const DEFAULT_BORDER_WIDTH = 5;
+const DEFAULT_PIN_RADIUS = 5;
 
 export default {
     props: ["componentData"],
@@ -13,6 +14,7 @@ export default {
             screenHeight: 0,
             borderRadius: 0,
             borderWidth: 0,
+            pinRadius: 0,
             visibility: "visible",
             zIndex: "auto",
             dragging: false,
@@ -25,6 +27,8 @@ export default {
 
             this.borderRadius = this.$parent.scaleToZoom(DEFAULT_BORDER_RADIUS);
             this.borderWidth = this.$parent.scaleToZoom(DEFAULT_BORDER_WIDTH);
+
+            this.pinRadius = this.$parent.scaleToZoom(DEFAULT_PIN_RADIUS);
             
             this.screenWidth = this.$parent.scaleToZoom(this.componentData.width) - this.borderWidth * 2;
             this.screenHeight = this.$parent.scaleToZoom(this.componentData.height) - this.borderWidth * 2;
@@ -89,6 +93,29 @@ export default {
         @pointerup="this.stopDrag"
         >
 
+        <div class="pin" v-for="(pin, index) in this.componentData.pins.inputs"
+        :style="{
+            'top':`${(index + 0.5) / (this.componentData.pins.inputs.length) * 100}%`,
+            'left':`${-2 * this.borderWidth}px`,
+            'border-radius':`${this.pinRadius}px`,
+            'width':`${2 * this.pinRadius}px`,
+            'height':`${2 * this.pinRadius}px`,
+            'background-color':`${(pin.state ? 'crimson' : 'rgb(80, 9, 23)')}`,
+        }">
+        </div>
+
+        <div class="pin" v-for="(pin, index) in this.componentData.pins.outputs"
+        :style="{
+            'top':`${(index + 0.5) / (this.componentData.pins.outputs.length) * 100}%`,
+            'right':`${-2 * this.borderWidth}px`,
+            'border-radius':`${this.pinRadius}px`,
+            'width':`${2 * this.pinRadius}px`,
+            'height':`${2 * this.pinRadius}px`,
+            'background-color':`${(pin.state ? 'crimson' : 'rgb(80, 9, 23)')}`,
+        }">
+        </div>
+
+        {{ this.componentData.behavior.name }}
     </div>
 </template>
 
@@ -98,5 +125,12 @@ export default {
     position: absolute;
     border-style: solid;
     border-color: gray;
+    font-weight: bold;
+}
+
+.pin {
+    position: absolute;
+    transform: translateY(-50%);
+    background-color: rgb(80, 9, 23);
 }
 </style>

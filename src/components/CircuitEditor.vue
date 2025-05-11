@@ -4,8 +4,9 @@ import BaseComponent from './BaseComponent.vue';
 import { ref } from 'vue';
 
 const GRID_CELL_SIZE = 50;
-
 const LARGE_GRID_CELL_SIZE = 200;
+
+let NEXT_COMPONENT_ID = 0;
 
 export default {
     data() {
@@ -155,12 +156,23 @@ export default {
             this.startZoom();
         },
         newBaseComponent(behavior, position, width, height) {
-            this.baseComponentsData.push({
+            let component = {
+                id: NEXT_COMPONENT_ID,
                 behavior: behavior,
                 position: position,
                 width: width,
                 height: height,
-            });
+                pins: {
+                    inputs: [],
+                    outputs: [],
+                },
+            };
+
+            this.baseComponentsData.push(component);
+
+            NEXT_COMPONENT_ID += 1;
+
+            return component;
         },
         newEmptyComponent(position, width, height) {
             this.newBaseComponent({}, position, width, height);
@@ -187,7 +199,46 @@ export default {
                 });
             }
 
-            this.newBaseComponent(behavior, position, libraryComponent.dimensions.width, libraryComponent.dimensions.height);
+            let component = this.newBaseComponent(behavior, position, libraryComponent.dimensions.width, libraryComponent.dimensions.height);
+
+            for (let i = 0; i < behavior.inputs; i++) {
+                this.addComponentPin(component.id, "INPUT");
+            }
+            for (let i = 0; i < behavior.outputs; i++) {
+                this.addComponentPin(component.id, "OUTPUT");
+            }
+        },
+        findComponentById(componentId) {
+            return this.baseComponentsData.find(comp => {
+                return comp.id == componentId;
+            });
+        },
+        addComponentPin(componentId, pinType) {
+            let component = this.findComponentById(componentId);
+
+            let pin = {
+                type: pinType,
+                state: false,
+                parentId: componentId,
+            };
+
+            if (pinType === "OUTPUT") {
+                pin.index = component.pins.outputs.length;
+                component.pins.outputs.push(pin);
+            }
+            else {
+                pin.index = component.pins.inputs.length;
+                component.pins.inputs.push(pin);
+            }
+        },
+        connectPins(sourceId, sourceIndex, destId, destIndex) {
+            let sourceComp = this.findComponentById(sourceId);
+            let source = sourceComp.pins.outputs[sourceIndex];
+
+            let destComp = this.findComponentById(destId);
+            let dest = destComp.pins.inputs[destIndex];
+
+            dest.source = source;
         },
         alteredCamera() {
             this.updateComponentPositions();
@@ -219,7 +270,10 @@ export default {
             return property * this.zoom;
         },
         onLibrariesLoaded() {
-            this.newLibraryComponent(0, "AND", {x: 400, y: 250});
+            this.newLibraryComponent(0, "AND", {x: 400, y: 100});
+            this.newLibraryComponent(0, "OR", {x: 400, y: 200});
+            this.newLibraryComponent(0, "NOT", {x: 400, y: 300});
+            this.newLibraryComponent(0, "XOR", {x: 400, y: 400});
 
             this.$nextTick(() => {
                 this.alteredCamera()
@@ -228,9 +282,6 @@ export default {
     },
     emits: ['mounted'],
     mounted() {
-        this.newEmptyComponent({x: 175, y: 125}, 100, 50);
-        this.newEmptyComponent({x: 375, y: 175}, 100, 100);
-
         this.$nextTick(() => {
             this.alteredCamera()
         });

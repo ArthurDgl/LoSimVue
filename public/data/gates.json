@@ -4,7 +4,7 @@
         "inputs": 2,
         "outputs": 1,
         "dimensions": {
-            "width": 50,
+            "width": 75,
             "height": 50
         },
         "resultEvaluation": {
@@ -17,7 +17,7 @@
         "inputs": 2,
         "outputs": 1,
         "dimensions": {
-            "width": 50,
+            "width": 75,
             "height": 50
         },
         "resultEvaluation": {
@@ -30,8 +30,8 @@
         "inputs": 1,
         "outputs": 1,
         "dimensions": {
-            "width": 50,
-            "height": 25
+            "width": 75,
+            "height": 50
         },
         "resultEvaluation": {
             "type": "TABLE",
@@ -43,7 +43,7 @@
         "inputs": 2,
         "outputs": 1,
         "dimensions": {
-            "width": 50,
+            "width": 75,
             "height": 50
         },
         "resultEvaluation": {
@@ -56,7 +56,7 @@
         "inputs": 2,
         "outputs": 1,
         "dimensions": {
-            "width": 50,
+            "width": 75,
             "height": 50
         },
         "resultEvaluation": {
@@ -69,7 +69,7 @@
         "inputs": 2,
         "outputs": 1,
         "dimensions": {
-            "width": 50,
+            "width": 75,
             "height": 50
         },
         "resultEvaluation": {
