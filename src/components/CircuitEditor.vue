@@ -173,7 +173,19 @@ export default {
             behavior.outputs = libraryComponent.outputs;
             behavior.name = libraryComponent.name;
 
-            behavior.resultFunction = eval(libraryComponent.resultFunctionString);
+            const resEval = libraryComponent.resultEvaluation;
+            if (resEval.type === "TABLE") {
+                behavior.resultFunction = (inputValues => {
+                    const l = inputValues.length;
+                    let index = 0;
+                    for (let i = 0; i < l; i++) {
+                        if (!inputValues[i]) continue;
+                        index += Math.pow(2, l - i - 1);
+                    }
+
+                    return resEval.table[index];
+                });
+            }
 
             this.newBaseComponent(behavior, position, libraryComponent.dimensions.width, libraryComponent.dimensions.height);
         },
