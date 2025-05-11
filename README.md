@@ -6,7 +6,8 @@ This is a web-based logic simulator inspired by Sebastian Lague's videos and my 
 First version was prototyped in p5js, this is the official one.
 
 Current Progress (accessible at http://dugnolle.fr:3000) :
-![image](https://github.com/user-attachments/assets/efe0753a-a85b-4f87-8576-8b5be3ed82a0)
+![image](https://github.com/user-attachments/assets/824b6a03-4c01-4eeb-ae91-3e9dfa3cabc4)
+
 
 Circuit blocks can be dragged
 
