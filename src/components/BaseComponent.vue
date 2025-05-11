@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 const DEFAULT_BORDER_RADIUS = 10;
 const DEFAULT_BORDER_WIDTH = 5;
 const DEFAULT_PIN_RADIUS = 5;
+const DEFAULT_FONT_SIZE = 20;
 
 export default {
     props: ["componentData"],
@@ -15,6 +16,7 @@ export default {
             borderRadius: 0,
             borderWidth: 0,
             pinRadius: 0,
+            fontSize: 0,
             visibility: "visible",
             zIndex: "auto",
             dragging: false,
@@ -29,6 +31,7 @@ export default {
             this.borderWidth = this.$parent.scaleToZoom(DEFAULT_BORDER_WIDTH);
 
             this.pinRadius = this.$parent.scaleToZoom(DEFAULT_PIN_RADIUS);
+            this.fontSize = this.$parent.scaleToZoom(DEFAULT_FONT_SIZE);
             
             this.screenWidth = this.$parent.scaleToZoom(this.componentData.width) - this.borderWidth * 2;
             this.screenHeight = this.$parent.scaleToZoom(this.componentData.height) - this.borderWidth * 2;
@@ -86,7 +89,8 @@ export default {
         'border-radius':`${this.borderRadius}px`,
         'border-width':`${this.borderWidth}px`,
         'visibility':`${this.visibility}`,
-        'zIndex':`${this.zIndex}`
+        'zIndex':`${this.zIndex}`,
+        'fontSize':`${this.fontSize}px`,
         }"
         
         @pointerdown="this.startDrag"
@@ -115,7 +119,7 @@ export default {
         }">
         </div>
 
-        {{ this.componentData.behavior.name }}
+        <p class="name">{{ this.componentData.behavior.name }}</p>
     </div>
 </template>
 
@@ -132,5 +136,13 @@ export default {
     position: absolute;
     transform: translateY(-50%);
     background-color: rgb(80, 9, 23);
+}
+
+.name {
+    position: absolute;
+    margin: 0;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 </style>

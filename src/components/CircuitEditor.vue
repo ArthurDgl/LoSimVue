@@ -143,6 +143,14 @@ export default {
             }
             this.startZoom();
         },
+        resetZoom() {
+            this.zoomTarget = 1;
+            this.zoomPosition = {
+                x: this.width / 2,
+                y: this.height / 2,
+            }
+            this.startZoom();
+        },
         handleMouseWheel(event) {
             this.zoomPosition.x = event.clientX;
             this.zoomPosition.y = event.clientY;
@@ -282,10 +290,6 @@ export default {
     },
     emits: ['mounted'],
     mounted() {
-        this.$nextTick(() => {
-            this.alteredCamera()
-        });
-
         this.$emit("mounted");
         console.log("CircuitEditor Mounted");
     },
@@ -315,6 +319,9 @@ export default {
         </button>
         <button @mousedown="this.zoomOut">
             <font-awesome-icon :icon="['fas', 'magnifying-glass-minus']" />
+        </button>
+        <button @mousedown="this.resetZoom">
+            <font-awesome-icon :icon="['fas', 'rectangle-xmark']" />
         </button>
     </div>
 
