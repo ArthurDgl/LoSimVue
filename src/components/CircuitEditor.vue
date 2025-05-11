@@ -27,6 +27,8 @@ export default {
 
             baseComponentsData: [],
             wires: [],
+
+            updateInterval: null,
         };
     },
     methods: {
@@ -210,6 +212,12 @@ export default {
                     baseComponent.text = render.text;
                 }
             }
+            else if (libRender.type === "COLOR") {
+                newRender.color = libRender.color;
+                newRender.start = (component, render, baseComponent) => {
+                    baseComponent.color = render.color;
+                }
+            }
             else if (libRender.type === "CONDITIONAL") {
                 if (libRender.condition.type === "STATE") {
                     const stateKey = libRender.condition.key;
@@ -228,7 +236,6 @@ export default {
                 newRender.renderFalse = this.parseRender(libRender.renderFalse, behavior);
 
                 newRender.start = (component, render, baseComponent) => {
-                    console.log(render);
                     if (render.conditionFunction(component)) {
                         render.renderTrue.start(component, render.renderTrue, baseComponent);
                     }
@@ -237,8 +244,48 @@ export default {
                     }
                 };
             }
+            else if (libRender.type === "MULTIPLE") {
+                newRender.subRenders = [];
+                libRender.subRenders.forEach(subRender => {
+                    newRender.subRenders.push(this.parseRender(subRender, behavior));
+                });
+
+                newRender.start = (component, render, baseComponent) => {
+                    render.subRenders.forEach(subRender => {
+                        subRender.start(component, subRender, baseComponent);
+                    });
+                };
+            }
 
             return newRender;
+        },
+        parseResultEvaluations(libResultEvaluations, behavior) {
+            let evalFunctions = [];
+            libResultEvaluations.forEach(resEval => {
+                if (resEval.type === "TABLE") {
+                    evalFunctions.push((behavior, inputValues) => {
+                        const l = inputValues.length;
+                        let index = 0;
+                        for (let i = 0; i < l; i++) {
+                            if (!inputValues[i]) continue;
+                            index += Math.pow(2, l - i - 1);
+                        }
+
+                        return resEval.table[index];
+                    });
+                }
+                else if (resEval.type === "NONE") {
+                    evalFunctions.push((behavior, inputValues) => {});
+                }
+                else if (resEval.type === "STATE") {
+                    behavior.state[resEval.key] = false;
+                    evalFunctions.push((behavior, inputValues) => {
+                        return behavior.state[resEval.key];
+                    });
+                }
+            });
+            
+            return evalFunctions;
         },
         newLibraryComponent(libraryId, componentName, position) {
             let behavior = {
@@ -251,28 +298,7 @@ export default {
             behavior.outputs = libraryComponent.outputs;
             behavior.name = libraryComponent.name;
 
-            const resEval = libraryComponent.resultEvaluation;
-            if (resEval.type === "TABLE") {
-                behavior.resultFunction = ((behavior, inputValues) => {
-                    const l = inputValues.length;
-                    let index = 0;
-                    for (let i = 0; i < l; i++) {
-                        if (!inputValues[i]) continue;
-                        index += Math.pow(2, l - i - 1);
-                    }
-
-                    return resEval.table[index];
-                });
-            }
-            else if (resEval.type === "NONE") {
-                behavior.resultFunction = ((behavior, inputValues) => {});
-            }
-            else if (resEval.type === "STATE") {
-                behavior.state[resEval.key] = false;
-                behavior.resultFunction = ((behavior, inputValues) => {
-                    return behavior.state[resEval.key];
-                });
-            }
+            behavior.resultFunctions = this.parseResultEvaluations(libraryComponent.resultEvaluations, behavior);
 
             const interaction = libraryComponent.interaction;
             if (interaction) {
@@ -428,24 +454,35 @@ export default {
             document.body.style.cursor = this.getMouseTool();
         },
         onLibrariesLoaded() {
-            this.newLibraryComponent(0, "AND", {x: 400, y: 100});
-            this.newLibraryComponent(0, "OR", {x: 400, y: 200});
-            this.newLibraryComponent(0, "NOT", {x: 600, y: 300});
-            this.newLibraryComponent(0, "XOR", {x: 400, y: 400});
+            this.newLibraryComponent(0, "AND", {x: 400, y: 100}); // 0
+            this.newLibraryComponent(0, "OR", {x: 400, y: 200});  // 1
+            this.newLibraryComponent(0, "NOT", {x: 600, y: 300}); // 2
+            this.newLibraryComponent(0, "XOR", {x: 400, y: 400}); // 3
 
-            this.newLibraryComponent(1, "IN", {x: 200, y: 200});
+            this.newLibraryComponent(1, "IN", {x: 200, y: 200});  // 4
+            this.newLibraryComponent(1, "IN", {x: 200, y: 250});  // 5
+            this.newLibraryComponent(1, "OUT", {x: 800, y: 200}); // 6
 
-            this.findComponentById(1).pins.outputs[0].state = true;
-
+            this.connectPins(4, 0, 1, 0, []);
+            this.connectPins(5, 0, 1, 1, []);
             this.connectPins(1, 0, 2, 0, []);
+            this.connectPins(2, 0, 6, 0, []);
 
             this.$nextTick(() => {
+                this.updateInterval = setInterval(this.updateComponents, 10);
+
                 this.alteredCamera();
                 this.$nextTick(() => {
                     this.alteredCamera();
                 })
             });
         },
+        updateComponents() {
+            this.$refs.baseComponents.forEach(baseComponent => {
+                baseComponent.updateLogic();
+            });
+            this.updateCanvas();
+        }
     },
     emits: ['mounted'],
     mounted() {
@@ -499,11 +536,6 @@ export default {
 <style scoped>
 .background {
     overflow: hidden;
-}
-
-.line {
-    position: absolute;
-    background-color: lightslategray;
 }
 
 #zoom-buttons {

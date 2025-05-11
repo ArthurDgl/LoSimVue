@@ -7,10 +7,12 @@
             "width": 75,
             "height": 50
         },
-        "resultEvaluation": {
-            "type": "TABLE",
-            "table": [false, false, false, true]
-        },
+        "resultEvaluations": [
+            {
+                "type": "TABLE",
+                "table": [false, false, false, true]
+            }
+        ],
         "render": {
             "type": "DEFAULT"
         }
@@ -23,10 +25,12 @@
             "width": 75,
             "height": 50
         },
-        "resultEvaluation": {
-            "type": "TABLE",
-            "table": [false, true, true, true]
-        },
+        "resultEvaluations": [
+            {
+                "type": "TABLE",
+                "table": [false, true, true, true]
+            }
+        ],
         "render": {
             "type": "DEFAULT"
         }
@@ -39,10 +43,12 @@
             "width": 75,
             "height": 50
         },
-        "resultEvaluation": {
-            "type": "TABLE",
-            "table": [true, false]
-        },
+        "resultEvaluations": [
+            {
+                "type": "TABLE",
+                "table": [true, false]
+            }
+        ],
         "render": {
             "type": "DEFAULT"
         }
@@ -55,10 +61,12 @@
             "width": 75,
             "height": 50
         },
-        "resultEvaluation": {
-            "type": "TABLE",
-            "table": [false, true, true, false]
-        },
+        "resultEvaluations": [
+            {
+                "type": "TABLE",
+                "table": [false, true, true, false]
+            }
+        ],
         "render": {
             "type": "DEFAULT"
         }
@@ -71,10 +79,12 @@
             "width": 75,
             "height": 50
         },
-        "resultEvaluation": {
-            "type": "TABLE",
-            "table": [true, true, true, false]
-        },
+        "resultEvaluations": [
+            {
+                "type": "TABLE",
+                "table": [true, true, true, false]
+            }
+        ],
         "render": {
             "type": "DEFAULT"
         }
@@ -87,10 +97,12 @@
             "width": 75,
             "height": 50
         },
-        "resultEvaluation": {
-            "type": "TABLE",
-            "table": [true, false, false, false]
-        },
+        "resultEvaluations": [
+            {
+                "type": "TABLE",
+                "table": [true, false, false, false]
+            }
+        ],
         "render": {
             "type": "DEFAULT"
         }

@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
 const DEFAULT_BORDER_RADIUS = 10;
 const DEFAULT_BORDER_WIDTH = 5;
-const DEFAULT_PIN_RADIUS = 5;
+const DEFAULT_PIN_RADIUS = 4;
 const DEFAULT_FONT_SIZE = 20;
 
 export default {
@@ -23,6 +23,7 @@ export default {
             dragging: false,
             dragOffset: {x: 0, y: 0},
             text: "",
+            color: "dimgray",
         };
     },
     methods: {
@@ -93,13 +94,35 @@ export default {
         handleClick(event) {
             if (event.button == 0 && this.$parent.getMouseTool() === "pointer") {
                 this.componentData.behavior.onPoke(this.componentData.behavior);
-                this.componentData.behavior.render.start(this.componentData, this.componentData.behavior.render, this);
             }
+        },
+        updateRendering() {
+            this.componentData.behavior.render.start(this.componentData, this.componentData.behavior.render, this);
+        },
+        fetchSources() {
+            this.componentData.pins.inputs.forEach(inputPin => {
+                if (inputPin.source) {
+                    inputPin.state = inputPin.source.state;
+                }
+            });
+        },
+        updateOutputs() {
+            let inputValues = [];
+            this.componentData.pins.inputs.forEach((inputPin) => {
+                inputValues.push(inputPin.state);
+            });
+            this.componentData.pins.outputs.forEach((outputPin, index) => {
+                outputPin.state = this.componentData.behavior.resultFunctions[index](this.componentData.behavior, inputValues);
+            });
+        },
+        updateLogic() {
+            this.fetchSources();
+            this.updateOutputs();
+            this.updateRendering();
         },
     },
     mounted() {
         this.componentData.vueComponent = this;
-        this.componentData.behavior.render.start(this.componentData, this.componentData.behavior.render, this);
     }
 }
 </script>
@@ -115,6 +138,7 @@ export default {
         'visibility':`${this.visibility}`,
         'zIndex':`${this.zIndex}`,
         'fontSize':`${this.fontSize}px`,
+        'background-color':`${this.color}`,
         }"
         
         @click="this.handleClick"
@@ -152,7 +176,6 @@ export default {
 
 <style scoped>
 .plate {
-    background-color:dimgray;
     position: absolute;
     border-style: solid;
     border-color: gray;

@@ -7,31 +7,53 @@
             "width": 30,
             "height": 30
         },
-        "resultEvaluation": {
-            "type": "STATE",
-            "key": "value"
-        },
+        "resultEvaluations": [
+            {
+                "type": "STATE",
+                "key": "value"
+            }
+        ],
         "interaction": {
-            "type":"POKE",
+            "type": "POKE",
             "action": {
                 "type": "TOGGLE",
                 "key": "value"
             }
         },
         "render": {
-            "type":"CONDITIONAL",
-            "condition": {
-                "type": "STATE",
-                "key": "value"
-            },
-            "renderTrue": {
-                "type": "TEXT",
-                "text": "1"
-            },
-            "renderFalse": {
-                "type": "TEXT",
-                "text": "0"
-            }
+            "type": "MULTIPLE",
+            "subRenders": [
+                {
+                    "type": "CONDITIONAL",
+                    "condition": {
+                        "type": "STATE",
+                        "key": "value"
+                    },
+                    "renderTrue": {
+                        "type": "TEXT",
+                        "text": "1"
+                    },
+                    "renderFalse": {
+                        "type": "TEXT",
+                        "text": "0"
+                    }
+                },
+                {
+                    "type": "CONDITIONAL",
+                    "condition": {
+                        "type": "STATE",
+                        "key": "value"
+                    },
+                    "renderTrue": {
+                        "type": "COLOR",
+                        "color": "crimson"
+                    },
+                    "renderFalse": {
+                        "type": "COLOR",
+                        "color": "rgb(80, 9, 23)"
+                    }
+                }
+            ]
         }
     },
     {
@@ -42,23 +64,45 @@
             "width": 30,
             "height": 30
         },
-        "resultEvaluation": {
-            "type": "NONE"
-        },
-        "render": {
-            "type":"CONDITIONAL",
-            "condition": {
-                "type": "INPUT",
-                "pin": 0
-            },
-            "renderTrue": {
-                "type": "TEXT",
-                "text": "1"
-            },
-            "renderFalse": {
-                "type": "TEXT",
-                "text": "0"
+        "resultEvaluations": [
+            {
+                "type": "NONE"
             }
+        ],
+        "render": {
+            "type": "MULTIPLE",
+            "subRenders": [
+                {
+                    "type": "CONDITIONAL",
+                    "condition": {
+                        "type": "INPUT",
+                        "pin": 0
+                    },
+                    "renderTrue": {
+                        "type": "TEXT",
+                        "text": "1"
+                    },
+                    "renderFalse": {
+                        "type": "TEXT",
+                        "text": "0"
+                    }
+                },
+                {
+                    "type": "CONDITIONAL",
+                    "condition": {
+                        "type": "INPUT",
+                        "pin": 0
+                    },
+                    "renderTrue": {
+                        "type": "COLOR",
+                        "color": "crimson"
+                    },
+                    "renderFalse": {
+                        "type": "COLOR",
+                        "color": "rgb(80, 9, 23)"
+                    }
+                }
+            ]
         }
     }
 ]
