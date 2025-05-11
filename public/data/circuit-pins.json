@@ -1,0 +1,64 @@
+[
+    {
+        "name": "IN",
+        "inputs": 0,
+        "outputs": 1,
+        "dimensions": {
+            "width": 30,
+            "height": 30
+        },
+        "resultEvaluation": {
+            "type": "STATE",
+            "key": "value"
+        },
+        "interaction": {
+            "type":"POKE",
+            "action": {
+                "type": "TOGGLE",
+                "key": "value"
+            }
+        },
+        "render": {
+            "type":"CONDITIONAL",
+            "condition": {
+                "type": "STATE",
+                "key": "value"
+            },
+            "renderTrue": {
+                "type": "TEXT",
+                "text": "1"
+            },
+            "renderFalse": {
+                "type": "TEXT",
+                "text": "0"
+            }
+        }
+    },
+    {
+        "name": "OUT",
+        "inputs": 1,
+        "outputs": 0,
+        "dimensions": {
+            "width": 30,
+            "height": 30
+        },
+        "resultEvaluation": {
+            "type": "NONE"
+        },
+        "render": {
+            "type":"CONDITIONAL",
+            "condition": {
+                "type": "INPUT",
+                "pin": 0
+            },
+            "renderTrue": {
+                "type": "TEXT",
+                "text": "1"
+            },
+            "renderFalse": {
+                "type": "TEXT",
+                "text": "0"
+            }
+        }
+    }
+]

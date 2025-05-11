@@ -8,6 +8,7 @@ const DEFAULT_FONT_SIZE = 20;
 
 export default {
     props: ["componentData"],
+    emits: ["componentmove"],
     data() {
         return {
             screenPosition: {x:0, y: 0},
@@ -21,6 +22,7 @@ export default {
             zIndex: "auto",
             dragging: false,
             dragOffset: {x: 0, y: 0},
+            text: "",
         };
     },
     methods: {
@@ -41,6 +43,8 @@ export default {
         },
         startDrag(event) {
             if (event.pointerType === "mouse" && event.button != 0) return;
+            
+            if (this.$parent.getMouseTool() !== "default") return;
 
             document.body.style.cursor = "move";
             this.zIndex = "1";
@@ -67,16 +71,36 @@ export default {
             this.componentData.position = this.$parent.screenToWorldCoordinates(offsetPos);
 
             this.moveWithCamera();
+
+            this.$parent.updateCanvas();
         },
         stopDrag() {
-            document.body.style.cursor = "auto";
+            document.body.style.cursor = this.$parent.getMouseTool();
             this.zIndex = "auto";
 
             this.dragging = false;
             window.removeEventListener("pointermove", this.drag);
             window.removeEventListener("touchmove", this.drag);
         },
+        getInputPinPosition(pinIndex) {
+            const rect = this.$refs.in[pinIndex].getBoundingClientRect();
+            return {x: rect.left + this.pinRadius, y: rect.top + this.pinRadius};
+        },
+        getOutputPinPosition(pinIndex) {
+            const rect = this.$refs.out[pinIndex].getBoundingClientRect();
+            return {x: rect.left + this.pinRadius, y: rect.top + this.pinRadius};
+        },
+        handleClick(event) {
+            if (event.button == 0 && this.$parent.getMouseTool() === "pointer") {
+                this.componentData.behavior.onPoke(this.componentData.behavior);
+                this.componentData.behavior.render.start(this.componentData, this.componentData.behavior.render, this);
+            }
+        },
     },
+    mounted() {
+        this.componentData.vueComponent = this;
+        this.componentData.behavior.render.start(this.componentData, this.componentData.behavior.render, this);
+    }
 }
 </script>
 
@@ -93,6 +117,7 @@ export default {
         'fontSize':`${this.fontSize}px`,
         }"
         
+        @click="this.handleClick"
         @pointerdown="this.startDrag"
         @pointerup="this.stopDrag"
         >
@@ -105,7 +130,8 @@ export default {
             'width':`${2 * this.pinRadius}px`,
             'height':`${2 * this.pinRadius}px`,
             'background-color':`${(pin.state ? 'crimson' : 'rgb(80, 9, 23)')}`,
-        }">
+        }"
+        ref="in">
         </div>
 
         <div class="pin" v-for="(pin, index) in this.componentData.pins.outputs"
@@ -116,10 +142,11 @@ export default {
             'width':`${2 * this.pinRadius}px`,
             'height':`${2 * this.pinRadius}px`,
             'background-color':`${(pin.state ? 'crimson' : 'rgb(80, 9, 23)')}`,
-        }">
+        }"
+        ref="out">
         </div>
 
-        <p class="name">{{ this.componentData.behavior.name }}</p>
+        <p class="name">{{ this.text }}</p>
     </div>
 </template>
 
@@ -135,7 +162,6 @@ export default {
 .pin {
     position: absolute;
     transform: translateY(-50%);
-    background-color: rgb(80, 9, 23);
 }
 
 .name {

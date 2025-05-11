@@ -10,6 +10,9 @@
         "resultEvaluation": {
             "type": "TABLE",
             "table": [false, false, false, true]
+        },
+        "render": {
+            "type": "DEFAULT"
         }
     },
     {
@@ -23,6 +26,9 @@
         "resultEvaluation": {
             "type": "TABLE",
             "table": [false, true, true, true]
+        },
+        "render": {
+            "type": "DEFAULT"
         }
     },
     {
@@ -36,6 +42,9 @@
         "resultEvaluation": {
             "type": "TABLE",
             "table": [true, false]
+        },
+        "render": {
+            "type": "DEFAULT"
         }
     },
     {
@@ -49,6 +58,9 @@
         "resultEvaluation": {
             "type": "TABLE",
             "table": [false, true, true, false]
+        },
+        "render": {
+            "type": "DEFAULT"
         }
     },
     {
@@ -62,6 +74,9 @@
         "resultEvaluation": {
             "type": "TABLE",
             "table": [true, true, true, false]
+        },
+        "render": {
+            "type": "DEFAULT"
         }
     },
     {
@@ -75,6 +90,9 @@
         "resultEvaluation": {
             "type": "TABLE",
             "table": [true, false, false, false]
+        },
+        "render": {
+            "type": "DEFAULT"
         }
     }
 ]

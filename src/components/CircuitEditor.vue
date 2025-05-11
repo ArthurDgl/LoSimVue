@@ -1,10 +1,10 @@
 <script>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import BaseComponent from './BaseComponent.vue';
-import { ref } from 'vue';
 
 const GRID_CELL_SIZE = 50;
 const LARGE_GRID_CELL_SIZE = 200;
+const MOUSE_TOOLS = ["default", "pointer", "crosshair"];
 
 let NEXT_COMPONENT_ID = 0;
 
@@ -13,9 +13,12 @@ export default {
         return {
             width: 600,
             height: 600,
-            camera: {x: 0.0, y: 0.0},
+
             dragging: false,
             draggingPrevious: {x: 0, y: 0},
+            mouseToolIndex: 0,
+
+            camera: {x: 0.0, y: 0.0},
             zoom: 1.0,
             zoomFactor: 1.2,
             zoomTarget: 1.0,
@@ -23,12 +26,17 @@ export default {
             zoomInterval: null,
 
             baseComponentsData: [],
+            wires: [],
         };
     },
     methods: {
         setDimensions(width, height) {
             this.width = width;
             this.height = height;
+
+            this.$nextTick(() => {
+                this.alteredCamera();
+            });
         },
         getColumns() {
             const cellSize = this.zoom < 0.66 ? LARGE_GRID_CELL_SIZE : GRID_CELL_SIZE;
@@ -89,7 +97,7 @@ export default {
             this.alteredCamera();
         },
         stopDrag() {
-            document.body.style.cursor = "auto";
+            document.body.style.cursor = this.getMouseTool();
 
             this.dragging = false;
             window.removeEventListener("pointermove", this.drag);
@@ -185,8 +193,58 @@ export default {
         newEmptyComponent(position, width, height) {
             this.newBaseComponent({}, position, width, height);
         },
+        parseRender(libRender, behavior) {
+            let newRender = {
+                type: libRender.type
+            };
+
+            if (libRender.type === "DEFAULT") {
+                newRender.text = behavior.name;
+                newRender.start = (component, render, baseComponent) => {
+                    baseComponent.text = render.text;
+                }
+            }
+            else if (libRender.type === "TEXT") {
+                newRender.text = libRender.text;
+                newRender.start = (component, render, baseComponent) => {
+                    baseComponent.text = render.text;
+                }
+            }
+            else if (libRender.type === "CONDITIONAL") {
+                if (libRender.condition.type === "STATE") {
+                    const stateKey = libRender.condition.key;
+                    newRender.conditionFunction = (component) => {
+                        return component.behavior.state[stateKey];
+                    };
+                }
+                else if (libRender.condition.type === "INPUT") {
+                    const inputIndex = libRender.condition.pin;
+                    newRender.conditionFunction = (component) => {
+                        return component.pins.inputs[inputIndex].state;
+                    };
+                }
+
+                newRender.renderTrue = this.parseRender(libRender.renderTrue, behavior);
+                newRender.renderFalse = this.parseRender(libRender.renderFalse, behavior);
+
+                newRender.start = (component, render, baseComponent) => {
+                    console.log(render);
+                    if (render.conditionFunction(component)) {
+                        render.renderTrue.start(component, render.renderTrue, baseComponent);
+                    }
+                    else {
+                        render.renderFalse.start(component, render.renderFalse, baseComponent);
+                    }
+                };
+            }
+
+            return newRender;
+        },
         newLibraryComponent(libraryId, componentName, position) {
-            let behavior = {};
+            let behavior = {
+                state: {},
+                onPoke: (b) => {}
+            };
             let libraryComponent = this.$parent.getLibraryComponent(libraryId, componentName);
 
             behavior.inputs = libraryComponent.inputs;
@@ -195,7 +253,7 @@ export default {
 
             const resEval = libraryComponent.resultEvaluation;
             if (resEval.type === "TABLE") {
-                behavior.resultFunction = (inputValues => {
+                behavior.resultFunction = ((behavior, inputValues) => {
                     const l = inputValues.length;
                     let index = 0;
                     for (let i = 0; i < l; i++) {
@@ -206,6 +264,31 @@ export default {
                     return resEval.table[index];
                 });
             }
+            else if (resEval.type === "NONE") {
+                behavior.resultFunction = ((behavior, inputValues) => {});
+            }
+            else if (resEval.type === "STATE") {
+                behavior.state[resEval.key] = false;
+                behavior.resultFunction = ((behavior, inputValues) => {
+                    return behavior.state[resEval.key];
+                });
+            }
+
+            const interaction = libraryComponent.interaction;
+            if (interaction) {
+                let actionFunction;
+                if (interaction.action.type === "TOGGLE") {
+                    actionFunction = (behavior) => {
+                        behavior.state[interaction.action.key] = !behavior.state[interaction.action.key];
+                    }
+                }
+
+                if (interaction.type === "POKE") {
+                    behavior.onPoke = actionFunction;
+                }
+            }
+
+            behavior.render = this.parseRender(libraryComponent.render, behavior);
 
             let component = this.newBaseComponent(behavior, position, libraryComponent.dimensions.width, libraryComponent.dimensions.height);
 
@@ -228,6 +311,10 @@ export default {
                 type: pinType,
                 state: false,
                 parentId: componentId,
+                wires: {
+                    incoming: null,
+                    outgoing: []
+                },
             };
 
             if (pinType === "OUTPUT") {
@@ -239,7 +326,7 @@ export default {
                 component.pins.inputs.push(pin);
             }
         },
-        connectPins(sourceId, sourceIndex, destId, destIndex) {
+        connectPins(sourceId, sourceIndex, destId, destIndex, path) {
             let sourceComp = this.findComponentById(sourceId);
             let source = sourceComp.pins.outputs[sourceIndex];
 
@@ -247,13 +334,68 @@ export default {
             let dest = destComp.pins.inputs[destIndex];
 
             dest.source = source;
+
+            let wire = {
+                sourceId: sourceId,
+                sourceIndex: sourceIndex,
+                destId: destId,
+                destIndex: destIndex,
+                path: path,
+            }
+
+            this.wires.push(wire);
         },
         alteredCamera() {
             this.updateComponentPositions();
+            this.updateCanvas();
         },
         updateComponentPositions() {
+            if (!this.$refs.baseComponents) return;
+
             this.$refs.baseComponents.forEach(component => {
                 component.moveWithCamera(this.camera, this.zoom, this.width, this.height);
+            });
+        },
+        updateCanvas() {
+            const canvas = this.$refs.canvas;
+            const ctx = canvas.getContext("2d");
+
+            this.drawBackground(canvas, ctx);
+            this.drawWires(canvas, ctx);
+        },
+        drawBackground(canvas, ctx) {
+            ctx.fillStyle = "darkslategray";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "lightslategray";
+
+            const columns = this.getColumns();
+            columns.forEach(col => {
+                ctx.fillRect(col.left, col.top, col.width, col.height);
+            });
+
+            const rows = this.getRows();
+            rows.forEach(row => {
+                ctx.fillRect(row.left, row.top, row.width, row.height);
+            });
+        },
+        drawWires(canvas, ctx) {
+            ctx.lineWidth = 3;
+            this.wires.forEach(wire => {
+                const sourceComp = this.findComponentById(wire.sourceId);
+                ctx.strokeStyle = sourceComp.pins.outputs[wire.sourceIndex].state ? 'crimson' : 'rgb(80, 9, 23)';
+
+                const sourceVueComp = sourceComp.vueComponent;
+                const destVueComp = this.findComponentById(wire.destId).vueComponent;
+
+                const start = sourceVueComp.getOutputPinPosition(wire.sourceIndex);
+                const end = destVueComp.getInputPinPosition(wire.destIndex);
+
+                ctx.beginPath();
+                ctx.moveTo(start.x, start.y);
+                wire.path.forEach(point => {ctx.lineTo(point.x, point.y)});
+                ctx.lineTo(end.x, end.y);
+                ctx.stroke();
             });
         },
         worldToScreenCoordinates(coordinates) {
@@ -277,14 +419,31 @@ export default {
         scaleToZoom(property) {
             return property * this.zoom;
         },
+        getMouseTool() {
+            return MOUSE_TOOLS[this.mouseToolIndex];
+        },
+        cycleMouseTools() {
+            this.mouseToolIndex = (this.mouseToolIndex + 1) % MOUSE_TOOLS.length;
+
+            document.body.style.cursor = this.getMouseTool();
+        },
         onLibrariesLoaded() {
             this.newLibraryComponent(0, "AND", {x: 400, y: 100});
             this.newLibraryComponent(0, "OR", {x: 400, y: 200});
-            this.newLibraryComponent(0, "NOT", {x: 400, y: 300});
+            this.newLibraryComponent(0, "NOT", {x: 600, y: 300});
             this.newLibraryComponent(0, "XOR", {x: 400, y: 400});
 
+            this.newLibraryComponent(1, "IN", {x: 200, y: 200});
+
+            this.findComponentById(1).pins.outputs[0].state = true;
+
+            this.connectPins(1, 0, 2, 0, []);
+
             this.$nextTick(() => {
-                this.alteredCamera()
+                this.alteredCamera();
+                this.$nextTick(() => {
+                    this.alteredCamera();
+                })
             });
         },
     },
@@ -300,18 +459,14 @@ export default {
 </script>
 
 <template>
-    <div class="grid"
-    :style="{'width':`${this.width}px`, 'height':`${this.height}px`}"
+    <canvas class="background"
+    :width="this.width"
+    :height="this.height"
     @pointerdown="this.startDrag"
     @pointerup="this.stopDrag"
+    ref="canvas"
     >
-        <div v-for="line in this.getColumns().concat(this.getRows())" class="line" :style="{
-            'top':`${line.top}px`,
-            'left':`${line.left}px`,
-            'width':`${line.width}px`,
-            'height':`${line.height}px`
-            }"></div>
-    </div>
+    </canvas>
 
     <div id="zoom-buttons">
         <button @mousedown="this.zoomIn">
@@ -325,6 +480,14 @@ export default {
         </button>
     </div>
 
+    <div id="top-buttons">
+        <button @mousedown="this.cycleMouseTools">
+            <font-awesome-icon :icon="['fas', 'arrow-pointer']" v-if="this.mouseToolIndex == 0"/>
+            <font-awesome-icon :icon="['fas', 'hand-pointer']" v-else-if="this.mouseToolIndex == 1"/>
+            <font-awesome-icon :icon="['fas', 'network-wired']" v-else-if="this.mouseToolIndex == 2"/>
+        </button>
+    </div>
+
     <BaseComponent
         v-for="(component, index) in this.baseComponentsData"
         :key="index"
@@ -334,9 +497,7 @@ export default {
 </template>
 
 <style scoped>
-.grid {
-    position: relative;
-    background-color: darkslategrey;
+.background {
     overflow: hidden;
 }
 
@@ -357,8 +518,21 @@ export default {
     z-index: 10;
 }
 
+#top-buttons {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
 button {
     position: relative;
+    width: 50px;
     margin: 10px;
     margin-bottom: 0;
     padding-top: 10px;

@@ -5,5 +5,12 @@
         "type": "native",
         "file": "gates.json",
         "description": "Contains the basic logic gates : AND, OR, NOT, XOR, NAND, NOR"
+    },
+    {
+        "name": "Circuit Pins",
+        "id": 1,
+        "type": "native",
+        "file": "circuit-pins.json",
+        "description": "Contains Input and Output pins used in recursive circuits"
     }
 ]
