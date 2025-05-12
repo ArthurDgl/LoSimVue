@@ -39,11 +39,11 @@ export default {
             this.screenWidth = this.$parent.scaleToZoom(this.componentData.width) - this.borderWidth * 2;
             this.screenHeight = this.$parent.scaleToZoom(this.componentData.height) - this.borderWidth * 2;
 
-            this.visibility = this.$parent.isBoxInBounds(this.screenPosition, this.screenWidth, this.screenHeight) ?
+            this.visibility = this.$parent.isBoxInBounds(this.screenPosition, this.screenWidth + 2 * this.borderWidth, this.screenHeight + 2 * this.borderWidth) ?
                 "visible" : "hidden";
         },
         startDrag(event) {
-            if (event.pointerType === "mouse" && event.button != 0) return;
+            if (event.button != 0) return;
             
             if (this.$parent.getMouseTool() !== "default") return;
 
@@ -58,12 +58,11 @@ export default {
             };
 
             window.addEventListener("pointermove", this.drag);
-            window.addEventListener("touchmove", this.drag);
         },
         drag(event) {
             if (!this.dragging) return;
 
-            let cursorPos = !event.touches ? {x: event.clientX, y: event.clientY} : {x: event.touches[0].clientX, y: event.touches[0].clientY};
+            let cursorPos = {x: event.clientX, y: event.clientY};
             let offsetPos = {
                 x: cursorPos.x - this.dragOffset.x,
                 y: cursorPos.y - this.dragOffset.y,
@@ -81,15 +80,18 @@ export default {
 
             this.dragging = false;
             window.removeEventListener("pointermove", this.drag);
-            window.removeEventListener("touchmove", this.drag);
         },
         getInputPinPosition(pinIndex) {
-            const rect = this.$refs.in[pinIndex].getBoundingClientRect();
-            return {x: rect.left + this.pinRadius, y: rect.top + this.pinRadius};
+            const x = this.componentData.position.x;
+            const fromTop = (pinIndex + 0.5) / (this.componentData.pins.inputs.length);
+            const y = this.componentData.position.y + (this.componentData.height - 2 * DEFAULT_BORDER_WIDTH) * fromTop + DEFAULT_BORDER_WIDTH;
+            return {x: x, y: y};
         },
         getOutputPinPosition(pinIndex) {
-            const rect = this.$refs.out[pinIndex].getBoundingClientRect();
-            return {x: rect.left + this.pinRadius, y: rect.top + this.pinRadius};
+            const x = this.componentData.position.x + this.componentData.width;
+            const fromTop = (pinIndex + 0.5) / (this.componentData.pins.outputs.length);
+            const y = this.componentData.position.y + (this.componentData.height - 2 * DEFAULT_BORDER_WIDTH) * fromTop + DEFAULT_BORDER_WIDTH;
+            return {x: x, y: y};
         },
         handleClick(event) {
             if (event.button == 0 && this.$parent.getMouseTool() === "pointer") {
@@ -142,14 +144,14 @@ export default {
         }"
         
         @click="this.handleClick"
-        @pointerdown="this.startDrag"
-        @pointerup="this.stopDrag"
+        @mousedown="this.startDrag"
+        @mouseup="this.stopDrag"
         >
 
         <div class="pin" v-for="(pin, index) in this.componentData.pins.inputs"
         :style="{
             'top':`${(index + 0.5) / (this.componentData.pins.inputs.length) * 100}%`,
-            'left':`${-2 * this.borderWidth}px`,
+            'left':`${-this.borderWidth}px`,
             'border-radius':`${this.pinRadius}px`,
             'width':`${2 * this.pinRadius}px`,
             'height':`${2 * this.pinRadius}px`,
@@ -161,7 +163,7 @@ export default {
         <div class="pin" v-for="(pin, index) in this.componentData.pins.outputs"
         :style="{
             'top':`${(index + 0.5) / (this.componentData.pins.outputs.length) * 100}%`,
-            'right':`${-2 * this.borderWidth}px`,
+            'left':`${this.borderWidth + this.screenWidth}px`,
             'border-radius':`${this.pinRadius}px`,
             'width':`${2 * this.pinRadius}px`,
             'height':`${2 * this.pinRadius}px`,
@@ -184,7 +186,7 @@ export default {
 
 .pin {
     position: absolute;
-    transform: translateY(-50%);
+    transform: translate(-50%, -50%);
 }
 
 .name {
@@ -194,5 +196,6 @@ export default {
     left: 50%;
     transform: translate(-50%, -50%);
     user-select: none;
+    color: aliceblue;
 }
 </style>

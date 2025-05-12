@@ -79,19 +79,18 @@ export default {
             return rows;
         },
         startDrag(event) {
-            if (event.pointerType === "mouse" && event.button != 1) return;
+            if (event.button != 1) return;
 
             document.body.style.cursor = "move";
 
             this.dragging = true;
             this.draggingPrevious = {x: event.clientX, y: event.clientY};
             window.addEventListener("pointermove", this.drag);
-            window.addEventListener("touchmove", this.drag);
         },
         drag(event) {
             if (!this.dragging) return;
 
-            let currentPos = !event.touches ? {x: event.clientX, y: event.clientY} : {x: event.touches[0].clientX, y: event.touches[0].clientY};
+            let currentPos = {x: event.clientX, y: event.clientY};
             this.camera.x -= (currentPos.x - this.draggingPrevious.x) / this.zoom;
             this.camera.y -= (currentPos.y - this.draggingPrevious.y) / this.zoom;
             this.draggingPrevious = currentPos;
@@ -103,7 +102,6 @@ export default {
 
             this.dragging = false;
             window.removeEventListener("pointermove", this.drag);
-            window.removeEventListener("touchmove", this.drag);
         },
         startZoom() {
             if (this.zoomInterval) {
@@ -165,11 +163,11 @@ export default {
             this.zoomPosition.x = event.clientX;
             this.zoomPosition.y = event.clientY;
 
-            if (event.deltaY > 0 && this.zoomTarget > 0.25) {
-                this.zoomTarget /= this.zoomFactor;
-            } else if (event.deltaY < 0 && this.zoomTarget < 4) {
-                this.zoomTarget *= this.zoomFactor;
-            }
+            const zoomSensitivity = 0.002;
+            const zoomChange = 1 - (event.deltaY * zoomSensitivity);
+
+            const newZoomTarget = this.zoomTarget * zoomChange;
+            this.zoomTarget = Math.min(4, Math.max(0.25, newZoomTarget));
 
             this.startZoom();
         },
@@ -406,7 +404,7 @@ export default {
             });
         },
         drawWires(canvas, ctx) {
-            ctx.lineWidth = 3;
+            ctx.lineWidth = this.scaleToZoom(3);
             this.wires.forEach(wire => {
                 const sourceComp = this.findComponentById(wire.sourceId);
                 ctx.strokeStyle = sourceComp.pins.outputs[wire.sourceIndex].state ? 'crimson' : 'rgb(80, 9, 23)';
@@ -414,8 +412,8 @@ export default {
                 const sourceVueComp = sourceComp.vueComponent;
                 const destVueComp = this.findComponentById(wire.destId).vueComponent;
 
-                const start = sourceVueComp.getOutputPinPosition(wire.sourceIndex);
-                const end = destVueComp.getInputPinPosition(wire.destIndex);
+                const start = this.worldToScreenCoordinates(sourceVueComp.getOutputPinPosition(wire.sourceIndex));
+                const end = this.worldToScreenCoordinates(destVueComp.getInputPinPosition(wire.destIndex));
 
                 ctx.beginPath();
                 ctx.moveTo(start.x, start.y);
@@ -499,8 +497,8 @@ export default {
     <canvas class="background"
     :width="this.width"
     :height="this.height"
-    @pointerdown="this.startDrag"
-    @pointerup="this.stopDrag"
+    @mousedown="this.startDrag"
+    @mouseup="this.stopDrag"
     ref="canvas"
     >
     </canvas>
