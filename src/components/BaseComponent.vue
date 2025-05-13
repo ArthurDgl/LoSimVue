@@ -43,6 +43,8 @@ export default {
                 "visible" : "hidden";
         },
         startDrag(event) {
+            window.getSelection()?.removeAllRanges();
+
             if (event.button != 0) return;
             
             if (this.$parent.getMouseTool() !== "default") return;
@@ -57,10 +59,12 @@ export default {
                 y: event.clientY - this.screenPosition.y,
             };
 
-            window.addEventListener("pointermove", this.drag);
+            window.addEventListener("mousemove", this.drag);
+            window.addEventListener("mouseup", this.stopDrag);
         },
         drag(event) {
-            if (!this.dragging) return;
+            window.getSelection()?.removeAllRanges();
+            if (!this.dragging) {return;}
 
             let cursorPos = {x: event.clientX, y: event.clientY};
             let offsetPos = {
@@ -75,11 +79,14 @@ export default {
             this.$parent.updateCanvas();
         },
         stopDrag() {
+            window.getSelection()?.removeAllRanges();
+
             document.body.style.cursor = this.$parent.getMouseTool();
             this.zIndex = "auto";
 
             this.dragging = false;
-            window.removeEventListener("pointermove", this.drag);
+            window.removeEventListener("mousemove", this.drag);
+            window.removeEventListener("mouseup", this.stopDrag);
         },
         getInputPinPosition(pinIndex) {
             const x = this.componentData.position.x;
@@ -145,7 +152,6 @@ export default {
         
         @click="this.handleClick"
         @mousedown="this.startDrag"
-        @mouseup="this.stopDrag"
         >
 
         <div class="pin" v-for="(pin, index) in this.componentData.pins.inputs"
@@ -172,7 +178,7 @@ export default {
         ref="out">
         </div>
 
-        <p class="name">{{ this.text }}</p>
+        <div class="name">{{ this.text }}</div>
     </div>
 </template>
 

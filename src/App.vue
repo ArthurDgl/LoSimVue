@@ -1,5 +1,6 @@
 <script>
 import CircuitEditor from './components/CircuitEditor.vue';
+import LibraryWindow from './components/LibraryWindow.vue';
 
 export default {
   data() {
@@ -15,6 +16,7 @@ export default {
       this.width = window.innerWidth;
       this.height = window.innerHeight;
       this.$refs.editor.setDimensions(this.width, this.height);
+      this.$refs.library.setDimensions(Math.min(this.width * 0.25, 250), this.height);
     },
     loadLibrary(filename) {
       return fetch("/data/" + filename)
@@ -32,6 +34,10 @@ export default {
         .then(response => response.json())
         .then(data => {
           this.libraries = data;
+
+          this.libraries.forEach(lib => {
+            lib.hide = true;
+          });
 
           const libraryPromises = this.libraries.map(library =>
             this.loadLibrary(library.file).then(content => {
@@ -77,13 +83,15 @@ export default {
     console.log("App Mounted");
   },
   components: {
-    CircuitEditor
+    CircuitEditor,
+    LibraryWindow
   }
 }
 </script>
 
 <template>
   <CircuitEditor ref="editor" @mounted="this.updateDimensions"/>
+  <LibraryWindow ref="library" :libraries="this.libraries" @mounted="this.updateDimensions"/>
 </template>
 
 <style scoped>

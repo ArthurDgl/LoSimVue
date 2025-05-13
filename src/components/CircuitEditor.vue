@@ -85,7 +85,8 @@ export default {
 
             this.dragging = true;
             this.draggingPrevious = {x: event.clientX, y: event.clientY};
-            window.addEventListener("pointermove", this.drag);
+            window.addEventListener("mousemove", this.drag);
+            window.addEventListener("mouseup", this.stopDrag);
         },
         drag(event) {
             if (!this.dragging) return;
@@ -101,7 +102,8 @@ export default {
             document.body.style.cursor = this.getMouseTool();
 
             this.dragging = false;
-            window.removeEventListener("pointermove", this.drag);
+            window.removeEventListener("mousemove", this.drag);
+            window.removeEventListener("mouseup", this.stopDrag);
         },
         startZoom() {
             if (this.zoomInterval) {
@@ -457,8 +459,8 @@ export default {
             this.newLibraryComponent(0, "NOT", {x: 600, y: 300}); // 2
             this.newLibraryComponent(0, "XOR", {x: 400, y: 400}); // 3
 
-            this.newLibraryComponent(1, "IN", {x: 200, y: 200});  // 4
-            this.newLibraryComponent(1, "IN", {x: 200, y: 250});  // 5
+            this.newLibraryComponent(1, "IN", {x: 300, y: 200});  // 4
+            this.newLibraryComponent(1, "IN", {x: 300, y: 250});  // 5
             this.newLibraryComponent(1, "OUT", {x: 800, y: 200}); // 6
 
             this.connectPins(4, 0, 1, 0, []);
@@ -498,7 +500,6 @@ export default {
     :width="this.width"
     :height="this.height"
     @mousedown="this.startDrag"
-    @mouseup="this.stopDrag"
     ref="canvas"
     >
     </canvas>
