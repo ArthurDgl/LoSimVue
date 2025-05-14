@@ -33,6 +33,8 @@ export default {
 
             worldMousePosition : {x: 0, y: 0},
             selectedOutput : null,
+
+            currentPath: [],
         };
     },
     methods: {
@@ -402,7 +404,17 @@ export default {
             }
         },
         clickBackground(event) {
-            this.selectedOutput = null;
+            if (!this.selectedOutput) {
+                return;
+            }
+
+            if (event.shiftKey) {
+                this.currentPath.push(this.screenToWorldCoordinates({x: event.clientX, y: event.clientY}));
+            }
+            else {
+                this.currentPath = [];
+                this.selectedOutput = null;
+            }
         },
         arePinsIdentical(pin1, pin2) {
             return pin1.type === pin2.type && pin1.parentId == pin2.parentId && pin1.index == pin2.index;
@@ -412,19 +424,22 @@ export default {
             return this.arePinsIdentical(this.selectedOutput, pin);
         },
         handlePinClick(pin) {
-            if (MOUSE_TOOLS[this.mouseToolIndex] !== "crosshair") return;
+            if (this.getMouseTool() !== "crosshair") return;
 
             if (this.selectedOutput) {
                 if (pin.type === "INPUT") {
                     if (pin.source) {
                         this.removeWire(pin.parentId, pin.index);
                         if (this.arePinsIdentical(this.selectedOutput, pin.source)) {
+                            this.currentPath = [];
                             this.selectedOutput = null;
                             return;
                         }
                     }
 
-                    this.connectPins(this.selectedOutput.parentId, this.selectedOutput.index, pin.parentId, pin.index, []);
+                    this.connectPins(this.selectedOutput.parentId, this.selectedOutput.index, pin.parentId, pin.index, this.currentPath);
+                    console.log(this.currentPath);
+                    this.currentPath = [];
                     this.selectedOutput = null;
                 }
                 else { // TYPE = OUTPUT
@@ -528,6 +543,7 @@ export default {
 
                 ctx.beginPath();
                 ctx.moveTo(start.x, start.y);
+                this.currentPath.map(point => {return this.worldToScreenCoordinates(point)}).forEach(point => {ctx.lineTo(point.x, point.y)});
                 ctx.lineTo(end.x, end.y);
                 ctx.stroke();
             }

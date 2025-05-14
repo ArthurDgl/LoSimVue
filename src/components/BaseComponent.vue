@@ -169,6 +169,9 @@ export default {
                 'height':`${2 * this.pinRadius}px`,
                 'background-color':`${(pin.state ? 'crimson' : 'rgb(80, 9, 23)')}`,
             }"
+            :class="{
+                'pin-highlight': this.$parent.getMouseTool() === 'crosshair' && this.$parent.selectedOutput
+            }"
             ref="in"
             @click="this.$parent.handlePinClick(pin)"
         >
@@ -182,7 +185,11 @@ export default {
                 'width':`${2 * this.pinRadius}px`,
                 'height':`${2 * this.pinRadius}px`,
                 'background-color':`${(pin.state ? 'crimson' : 'rgb(80, 9, 23)')}`,
-                'border-width':`${this.$parent.isPinSelected(pin) ? this.borderWidth / 2 : 0}px`
+                'border-width':`${this.borderWidth / 2}px`
+            }"
+            :class="{
+                'selected-output': this.$parent.isPinSelected(pin),
+                'pin-highlight': this.$parent.getMouseTool() === 'crosshair' && !this.$parent.selectedOutput
             }"
             ref="out"
             @click="this.$parent.handlePinClick(pin)"
@@ -204,10 +211,14 @@ export default {
 .pin {
     position: absolute;
     transform: translate(-50%, -50%);
+    border-color: aliceblue;
 }
 
-.output {
-    border-color: aliceblue;
+.selected-output {
+    border-style: solid;
+}
+
+.pin-highlight:hover {
     border-style: solid;
 }
 
