@@ -49,6 +49,8 @@ export default {
             
             if (this.$parent.getMouseTool() !== "default") return;
 
+            if (this.componentData.temporary) return;
+
             document.body.style.cursor = "move";
             this.zIndex = "1";
 
@@ -101,6 +103,10 @@ export default {
             return {x: x, y: y};
         },
         handleClick(event) {
+            if (this.componentData.temporary) {
+                this.$parent.placeTemporaryComponent();
+            }
+
             if (event.button == 0 && this.$parent.getMouseTool() === "pointer") {
                 this.componentData.behavior.onPoke(this.componentData.behavior);
             }
@@ -156,26 +162,31 @@ export default {
 
         <div class="pin" v-for="(pin, index) in this.componentData.pins.inputs"
         :style="{
-            'top':`${(index + 0.5) / (this.componentData.pins.inputs.length) * 100}%`,
-            'left':`${-this.borderWidth}px`,
-            'border-radius':`${this.pinRadius}px`,
-            'width':`${2 * this.pinRadius}px`,
-            'height':`${2 * this.pinRadius}px`,
-            'background-color':`${(pin.state ? 'crimson' : 'rgb(80, 9, 23)')}`,
-        }"
-        ref="in">
+                'top':`${(index + 0.5) / (this.componentData.pins.inputs.length) * 100}%`,
+                'left':`${-this.borderWidth}px`,
+                'border-radius':`${this.pinRadius}px`,
+                'width':`${2 * this.pinRadius}px`,
+                'height':`${2 * this.pinRadius}px`,
+                'background-color':`${(pin.state ? 'crimson' : 'rgb(80, 9, 23)')}`,
+            }"
+            ref="in"
+            @click="this.$parent.handlePinClick(pin)"
+        >
         </div>
 
-        <div class="pin" v-for="(pin, index) in this.componentData.pins.outputs"
-        :style="{
-            'top':`${(index + 0.5) / (this.componentData.pins.outputs.length) * 100}%`,
-            'left':`${this.borderWidth + this.screenWidth}px`,
-            'border-radius':`${this.pinRadius}px`,
-            'width':`${2 * this.pinRadius}px`,
-            'height':`${2 * this.pinRadius}px`,
-            'background-color':`${(pin.state ? 'crimson' : 'rgb(80, 9, 23)')}`,
-        }"
-        ref="out">
+        <div class="pin output" v-for="(pin, index) in this.componentData.pins.outputs"
+            :style="{
+                'top':`${(index + 0.5) / (this.componentData.pins.outputs.length) * 100}%`,
+                'left':`${this.borderWidth + this.screenWidth}px`,
+                'border-radius':`${this.pinRadius}px`,
+                'width':`${2 * this.pinRadius}px`,
+                'height':`${2 * this.pinRadius}px`,
+                'background-color':`${(pin.state ? 'crimson' : 'rgb(80, 9, 23)')}`,
+                'border-width':`${this.$parent.isPinSelected(pin) ? this.borderWidth / 2 : 0}px`
+            }"
+            ref="out"
+            @click="this.$parent.handlePinClick(pin)"
+        >
         </div>
 
         <div class="name">{{ this.text }}</div>
@@ -193,6 +204,11 @@ export default {
 .pin {
     position: absolute;
     transform: translate(-50%, -50%);
+}
+
+.output {
+    border-color: aliceblue;
+    border-style: solid;
 }
 
 .name {

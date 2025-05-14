@@ -26,9 +26,13 @@ export default {
             zoomInterval: null,
 
             baseComponentsData: [],
+            temporaryComponent: null,
             wires: [],
 
             updateInterval: null,
+
+            worldMousePosition : {x: 0, y: 0},
+            selectedOutput : null,
         };
     },
     methods: {
@@ -78,23 +82,29 @@ export default {
             }
             return rows;
         },
-        startDrag(event) {
-            if (event.button != 1) return;
+        startDragMousedown(event) {
+            //if (event.button != 1) return;
 
+            this.startDrag();
+            window.addEventListener("mouseup", this.stopDrag);
+        },
+        startDragKeydown(event) {
+            if (event.key !== ' ') return;
+
+            this.startDrag();
+            window.addEventListener("keyup", event => {if (event.key !== ' ') return; this.stopDrag()});
+        },
+        startDrag() {
             document.body.style.cursor = "move";
 
             this.dragging = true;
-            this.draggingPrevious = {x: event.clientX, y: event.clientY};
             window.addEventListener("mousemove", this.drag);
-            window.addEventListener("mouseup", this.stopDrag);
         },
         drag(event) {
             if (!this.dragging) return;
 
-            let currentPos = {x: event.clientX, y: event.clientY};
-            this.camera.x -= (currentPos.x - this.draggingPrevious.x) / this.zoom;
-            this.camera.y -= (currentPos.y - this.draggingPrevious.y) / this.zoom;
-            this.draggingPrevious = currentPos;
+            this.camera.x -= event.movementX / this.zoom;
+            this.camera.y -= event.movementY / this.zoom;
 
             this.alteredCamera();
         },
@@ -186,14 +196,15 @@ export default {
                 },
             };
 
-            this.baseComponentsData.push(component);
-
             NEXT_COMPONENT_ID += 1;
 
             return component;
         },
         newEmptyComponent(position, width, height) {
-            this.newBaseComponent({}, position, width, height);
+            return this.newBaseComponent({}, position, width, height);
+        },
+        addEmptyComponent(position, width, height) {
+            this.baseComponentsData.push(this.newBaseComponent({}, position, width, height));
         },
         parseRender(libRender, behavior) {
             let newRender = {
@@ -319,10 +330,28 @@ export default {
             let component = this.newBaseComponent(behavior, position, libraryComponent.dimensions.width, libraryComponent.dimensions.height);
 
             for (let i = 0; i < behavior.inputs; i++) {
-                this.addComponentPin(component.id, "INPUT");
+                this.addComponentPin(component, "INPUT");
             }
             for (let i = 0; i < behavior.outputs; i++) {
-                this.addComponentPin(component.id, "OUTPUT");
+                this.addComponentPin(component, "OUTPUT");
+            }
+
+            return component;
+        },
+        addLibraryComponent(libraryId, componentName, position) {
+            this.baseComponentsData.push(this.newLibraryComponent(libraryId, componentName, position));
+        },
+        setTemporaryComponent(libraryId, componentName) {
+            this.temporaryComponent = this.newLibraryComponent(libraryId, componentName, {x: 0, y: 0});
+            this.temporaryComponent.temporary = true;
+        },
+        placeTemporaryComponent() {
+            if (this.temporaryComponent) {
+                this.temporaryComponent.temporary = null;
+                this.baseComponentsData.push(this.temporaryComponent);
+                this.temporaryComponent = null;
+
+                this.$nextTick(() => {this.alteredCamera()});
             }
         },
         findComponentById(componentId) {
@@ -330,7 +359,27 @@ export default {
                 return comp.id == componentId;
             });
         },
-        addComponentPin(componentId, pinType) {
+        addComponentPin(component, pinType) {
+            let pin = {
+                type: pinType,
+                state: false,
+                parentId: component.id,
+                wires: {
+                    incoming: null,
+                    outgoing: []
+                },
+            };
+
+            if (pinType === "OUTPUT") {
+                pin.index = component.pins.outputs.length;
+                component.pins.outputs.push(pin);
+            }
+            else {
+                pin.index = component.pins.inputs.length;
+                component.pins.inputs.push(pin);
+            }
+        },
+        addComponentPinById(componentId, pinType) {
             let component = this.findComponentById(componentId);
 
             let pin = {
@@ -351,6 +400,50 @@ export default {
                 pin.index = component.pins.inputs.length;
                 component.pins.inputs.push(pin);
             }
+        },
+        clickBackground(event) {
+            this.selectedOutput = null;
+        },
+        arePinsIdentical(pin1, pin2) {
+            return pin1.type === pin2.type && pin1.parentId == pin2.parentId && pin1.index == pin2.index;
+        },
+        isPinSelected(pin) {
+            if (!this.selectedOutput) return false;
+            return this.arePinsIdentical(this.selectedOutput, pin);
+        },
+        handlePinClick(pin) {
+            if (MOUSE_TOOLS[this.mouseToolIndex] !== "crosshair") return;
+
+            if (this.selectedOutput) {
+                if (pin.type === "INPUT") {
+                    if (pin.source) {
+                        this.removeWire(pin.parentId, pin.index);
+                        if (this.arePinsIdentical(this.selectedOutput, pin.source)) {
+                            this.selectedOutput = null;
+                            return;
+                        }
+                    }
+
+                    this.connectPins(this.selectedOutput.parentId, this.selectedOutput.index, pin.parentId, pin.index, []);
+                    this.selectedOutput = null;
+                }
+                else { // TYPE = OUTPUT
+                    this.selectedOutput = pin;
+                }
+            }
+            else { // NO SELECTED OUTPUT PIN
+                if (pin.type === "INPUT") {
+                    return;
+                }
+                else { // TYPE = OUTPUT
+                    this.selectedOutput = pin;
+                }
+            }
+        },
+        removeWire(destId, destIndex) {
+            this.wires = this.wires.filter(wire => {
+                return !(wire.destId == destId && wire.destIndex == destIndex);
+            });
         },
         connectPins(sourceId, sourceIndex, destId, destIndex, path) {
             let sourceComp = this.findComponentById(sourceId);
@@ -376,6 +469,8 @@ export default {
             this.updateCanvas();
         },
         updateComponentPositions() {
+            if (this.temporaryComponent) this.$refs.tempBaseComponent.moveWithCamera(this.camera, this.zoom, this.width, this.height);
+
             if (!this.$refs.baseComponents) return;
 
             this.$refs.baseComponents.forEach(component => {
@@ -419,10 +514,23 @@ export default {
 
                 ctx.beginPath();
                 ctx.moveTo(start.x, start.y);
-                wire.path.forEach(point => {ctx.lineTo(point.x, point.y)});
+                wire.path.map(point => {return this.worldToScreenCoordinates(point)}).forEach(point => {ctx.lineTo(point.x, point.y)});
                 ctx.lineTo(end.x, end.y);
                 ctx.stroke();
             });
+
+            if (this.selectedOutput) {
+                ctx.strokeStyle = this.selectedOutput.state ? 'crimson' : 'rgb(80, 9, 23)';
+                
+                const sourceVueComp = this.findComponentById(this.selectedOutput.parentId).vueComponent;
+                const start = this.worldToScreenCoordinates(sourceVueComp.getOutputPinPosition(this.selectedOutput.index));
+                const end = this.worldToScreenCoordinates(this.worldMousePosition);
+
+                ctx.beginPath();
+                ctx.moveTo(start.x, start.y);
+                ctx.lineTo(end.x, end.y);
+                ctx.stroke();
+            }
         },
         worldToScreenCoordinates(coordinates) {
             return {
@@ -454,14 +562,14 @@ export default {
             document.body.style.cursor = this.getMouseTool();
         },
         onLibrariesLoaded() {
-            this.newLibraryComponent(0, "AND", {x: 400, y: 100}); // 0
-            this.newLibraryComponent(0, "OR", {x: 400, y: 200});  // 1
-            this.newLibraryComponent(0, "NOT", {x: 600, y: 300}); // 2
-            this.newLibraryComponent(0, "XOR", {x: 400, y: 400}); // 3
+            this.addLibraryComponent(0, "AND", {x: 400, y: 100}); // 0
+            this.addLibraryComponent(0, "OR", {x: 400, y: 200});  // 1
+            this.addLibraryComponent(0, "NOT", {x: 600, y: 300}); // 2
+            this.addLibraryComponent(0, "XOR", {x: 400, y: 400}); // 3
 
-            this.newLibraryComponent(1, "IN", {x: 300, y: 200});  // 4
-            this.newLibraryComponent(1, "IN", {x: 300, y: 250});  // 5
-            this.newLibraryComponent(1, "OUT", {x: 800, y: 200}); // 6
+            this.addLibraryComponent(1, "IN", {x: 300, y: 200});  // 4
+            this.addLibraryComponent(1, "IN", {x: 300, y: 250});  // 5
+            this.addLibraryComponent(1, "OUT", {x: 800, y: 200}); // 6
 
             this.connectPins(4, 0, 1, 0, []);
             this.connectPins(5, 0, 1, 1, []);
@@ -482,10 +590,25 @@ export default {
                 baseComponent.updateLogic();
             });
             this.updateCanvas();
-        }
+        },
+        mouseMove(event) {
+            this.worldMousePosition = this.screenToWorldCoordinates({x: event.clientX, y: event.clientY});
+            if (this.temporaryComponent) {
+                this.temporaryComponent.position = {
+                    x: this.worldMousePosition.x - this.temporaryComponent.width / 2,
+                    y: this.worldMousePosition.y - this.temporaryComponent.height / 2
+                };
+                this.$refs.tempBaseComponent.moveWithCamera(this.camera, this.zoom, this.width, this.height);
+            }
+        },
     },
     emits: ['mounted'],
     mounted() {
+        this.$nextTick(() => {
+            window.addEventListener("keydown", this.startDragKeydown);
+            window.addEventListener("mousemove", this.mouseMove);
+        });
+
         this.$emit("mounted");
         console.log("CircuitEditor Mounted");
     },
@@ -499,7 +622,8 @@ export default {
     <canvas class="background"
     :width="this.width"
     :height="this.height"
-    @mousedown="this.startDrag"
+    @mousedown="this.startDragMousedown"
+    @click="this.clickBackground"
     ref="canvas"
     >
     </canvas>
@@ -529,6 +653,14 @@ export default {
         :key="index"
         :componentData="component"
         ref="baseComponents"
+    />
+
+    <BaseComponent
+        v-if="this.temporaryComponent"
+        :componentData="this.temporaryComponent"
+        :style="{
+            'opacity': '50%'}"
+        ref="tempBaseComponent"
     />
 </template>
 

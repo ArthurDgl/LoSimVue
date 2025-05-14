@@ -44,7 +44,11 @@ export default {
                     </div>
                 </div>
 
-                <div class="component" v-if="!lib.hide" v-for="comp in lib.content">
+                <div class="component"
+                    v-if="!lib.hide"
+                    v-for="comp in lib.content"
+                    @click="() => {this.$parent.selectLibraryComponent(lib.id, comp.name)}"
+                >
                     {{ comp.name }}
                 </div>
             </div>
@@ -87,5 +91,9 @@ export default {
 .component {
     display: flex;
     margin-left: 10%;
+}
+
+.component:hover {
+    text-decoration: underline;
 }
 </style>

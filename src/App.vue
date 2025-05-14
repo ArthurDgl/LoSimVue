@@ -70,6 +70,9 @@ export default {
         return comp.name === componentName;
       })[0];
     },
+    selectLibraryComponent(libraryId, componentName) {
+      this.$refs.editor.setTemporaryComponent(libraryId, componentName);
+    },
   },
   mounted() {
     window.addEventListener("resize", this.updateDimensions);
