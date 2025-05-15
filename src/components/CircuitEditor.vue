@@ -35,6 +35,8 @@ export default {
             selectedOutput : null,
 
             currentPath: [],
+
+            keysPressed: {},
         };
     },
     methods: {
@@ -85,14 +87,35 @@ export default {
             return rows;
         },
         startDragMousedown(event) {
-            //if (event.button != 1) return;
+            if (event.button == 2) return;
+            if ((this.getMouseTool() === 'default' || this.getMouseTool() === 'crosshair') && event.button != 1) return;
 
             this.startDrag();
             window.addEventListener("mouseup", this.stopDrag);
         },
-        startDragKeydown(event) {
-            if (event.key !== ' ') return;
+        handleKeydown(event) {
+            this.keysPressed[event.key] = true;
 
+            if (event.key === ' ') {
+                this.startDragKeydown();
+            }
+            else if (event.key === 'Escape' || event.key === 'z') {
+                this.setMouseTool(0);
+                this.cancelPath();
+            }
+            else if (event.key === 'x') {
+                this.setMouseTool(1);
+                this.cancelPath();
+            }
+            else if (event.key === 'c') {
+                this.setMouseTool(2);
+                this.cancelPath();
+            }
+        },
+        handleKeyup(event) {
+            this.keysPressed[event.key] = false;
+        },
+        startDragKeydown() {
             this.startDrag();
             window.addEventListener("keyup", event => {if (event.key !== ' ') return; this.stopDrag()});
         },
@@ -403,13 +426,26 @@ export default {
                 component.pins.inputs.push(pin);
             }
         },
+        cancelPath() {
+            this.currentPath = [];
+            this.selectedOutput = null;
+        },
         clickBackground(event) {
             if (!this.selectedOutput) {
                 return;
             }
 
             if (event.shiftKey) {
-                this.currentPath.push(this.screenToWorldCoordinates({x: event.clientX, y: event.clientY}));
+                
+                const clickPosition = {x: event.clientX, y: event.clientY};
+
+                const sourceVueComp = this.findComponentById(this.selectedOutput.parentId).vueComponent;
+                const start = sourceVueComp.getOutputPinPosition(this.selectedOutput.index);
+                const lastKnown = this.currentPath[0] ? this.currentPath[this.currentPath.length - 1] : start;
+
+                const placePosition = this.projectOnAxes(lastKnown, this.screenToWorldCoordinates(clickPosition));
+
+                this.currentPath.push(placePosition);
             }
             else {
                 this.currentPath = [];
@@ -431,10 +467,16 @@ export default {
                     if (pin.source) {
                         this.removeWire(pin.parentId, pin.index);
                         if (this.arePinsIdentical(this.selectedOutput, pin.source)) {
+                            pin.source = null;
                             this.currentPath = [];
                             this.selectedOutput = null;
                             return;
                         }
+                    }
+
+                    if (this.currentPath[0]) {
+                        const pinPosition = this.$refs.baseComponents[pin.parentId].getInputPinPosition(pin.index);
+                        this.currentPath[this.currentPath.length - 1] = this.projectOnAxes(pinPosition, this.currentPath[this.currentPath.length - 1]);
                     }
 
                     this.connectPins(this.selectedOutput.parentId, this.selectedOutput.index, pin.parentId, pin.index, this.currentPath);
@@ -539,7 +581,8 @@ export default {
                 
                 const sourceVueComp = this.findComponentById(this.selectedOutput.parentId).vueComponent;
                 const start = this.worldToScreenCoordinates(sourceVueComp.getOutputPinPosition(this.selectedOutput.index));
-                const end = this.worldToScreenCoordinates(this.worldMousePosition);
+                const lastKnown = this.currentPath[0] ? this.currentPath[this.currentPath.length - 1] : this.screenToWorldCoordinates(start);
+                const end = this.worldToScreenCoordinates(this.keysPressed.Shift ? this.projectOnAxes(lastKnown, this.worldMousePosition) : this.worldMousePosition);
 
                 ctx.beginPath();
                 ctx.moveTo(start.x, start.y);
@@ -560,6 +603,17 @@ export default {
                 y: coordinates.y / this.zoom + this.camera.y,
             }
         },
+        projectOnAxes(origin, point) {
+            const deltaX = Math.abs(origin.x - point.x);
+            const deltaY = Math.abs(origin.y - point.y);
+
+            if (deltaX > deltaY) {
+                return {x: point.x, y: origin.y};
+            }
+            else {
+                return {x: origin.x, y: point.y};
+            }
+        },
         isBoxInBounds(screenPosition, screenWidth, screenHeight) {
             return !(screenPosition.x > this.width
                 || screenPosition.x + screenWidth < 0
@@ -574,7 +628,10 @@ export default {
         },
         cycleMouseTools() {
             this.mouseToolIndex = (this.mouseToolIndex + 1) % MOUSE_TOOLS.length;
-
+            document.body.style.cursor = this.getMouseTool();
+        },
+        setMouseTool(index) {
+            this.mouseToolIndex = index;
             document.body.style.cursor = this.getMouseTool();
         },
         onLibrariesLoaded() {
@@ -621,7 +678,8 @@ export default {
     emits: ['mounted'],
     mounted() {
         this.$nextTick(() => {
-            window.addEventListener("keydown", this.startDragKeydown);
+            window.addEventListener("keydown", this.handleKeydown);
+            window.addEventListener("keyup", this.handleKeyup); 
             window.addEventListener("mousemove", this.mouseMove);
         });
 
@@ -644,7 +702,7 @@ export default {
     >
     </canvas>
 
-    <div id="zoom-buttons">
+    <div id="zoom-buttons" :style="{'left':`${this.width/2}px`}">
         <button @mousedown="this.zoomIn">
             <font-awesome-icon :icon="['fas', 'magnifying-glass-plus']" />
         </button>
@@ -656,7 +714,7 @@ export default {
         </button>
     </div>
 
-    <div id="top-buttons">
+    <div id="top-buttons" :style="{'left':`${this.width/2}px`}">
         <button @mousedown="this.cycleMouseTools">
             <font-awesome-icon :icon="['fas', 'arrow-pointer']" v-if="this.mouseToolIndex == 0"/>
             <font-awesome-icon :icon="['fas', 'hand-pointer']" v-else-if="this.mouseToolIndex == 1"/>
@@ -688,25 +746,25 @@ export default {
 #zoom-buttons {
     position: absolute;
     bottom: 20px;
-    left: 20px;
-    right: 20px;
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-items: center;
     z-index: 10;
+    width: fit-content;
+    transform: translateX(-50%);
 }
 
 #top-buttons {
     position: absolute;
     top: 20px;
-    left: 20px;
-    right: 20px;
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-items: center;
     z-index: 10;
+    width: fit-content;
+    transform: translateX(-50%);
 }
 
 button {
