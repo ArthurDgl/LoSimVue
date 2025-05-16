@@ -37,6 +37,8 @@ export default {
             currentPath: [],
 
             keysPressed: {},
+
+            showTrashBin: false,
         };
     },
     methods: {
@@ -384,6 +386,19 @@ export default {
                 return comp.id == componentId;
             });
         },
+        removeComponentById(componentId) {
+            this.baseComponentsData = this.baseComponentsData.filter(component => {
+                return component.id != componentId;
+            });
+
+            this.wires = this.wires.filter(wire => {
+                return wire.sourceId != componentId && wire.destId != componentId;
+            });
+
+            this.$nextTick(() => {
+                this.alteredCamera();
+            });
+        },
         addComponentPin(component, pinType) {
             let pin = {
                 type: pinType,
@@ -614,11 +629,33 @@ export default {
                 return {x: origin.x, y: point.y};
             }
         },
+        componentPickedUp(component) {
+            this.showTrashBin = true;
+        },
+        componentPlacedDown(component) {
+            this.showTrashBin = false;
+
+            if (this.isMouseInTrashBin()) {
+                this.removeComponentById(component.id);
+            }
+        },
         isBoxInBounds(screenPosition, screenWidth, screenHeight) {
             return !(screenPosition.x > this.width
                 || screenPosition.x + screenWidth < 0
                 || screenPosition.y > this.height
                 || screenPosition.y + screenHeight < 0);
+        },
+        isPointInBox(point, origin, width, height) {
+            return point.x >= origin.x &&
+                point.x <= origin.x + width &&
+                point.y >= origin.y &&
+                point.y <= origin.y + height;
+        },
+        isMouseInTrashBin() {
+            if (!this.$refs.trash) return false;
+
+            const rect = this.$refs.trash.getBoundingClientRect();
+            return this.isPointInBox(this.worldToScreenCoordinates(this.worldMousePosition), {x: rect.left, y: rect.top}, rect.width, rect.height);
         },
         scaleToZoom(property) {
             return property * this.zoom;
@@ -722,9 +759,20 @@ export default {
         </button>
     </div>
 
+    <div id="trash-bin"
+        ref="trash"
+        :class="[this.isMouseInTrashBin() ? 'trashing' : 'not-trashing']"
+        :style="{
+            'visibility':`${this.showTrashBin ? 'visible' : 'hidden'}`,
+            'opacity':`${this.showTrashBin ? '100%' : '0%'}`,
+        }"
+    >
+        DROP HERE TO DELETE
+    </div>
+
     <BaseComponent
-        v-for="(component, index) in this.baseComponentsData"
-        :key="index"
+        v-for="component in this.baseComponentsData"
+        :key="component.id"
         :componentData="component"
         ref="baseComponents"
     />
@@ -741,6 +789,33 @@ export default {
 <style scoped>
 .background {
     overflow: hidden;
+}
+
+#trash-bin {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 150px;
+    height: 100px;
+    background-color: rgba(200, 200, 200, 0.2);
+    border-radius: 10px;
+    font-weight: bold;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-style: dashed;
+    border-width: 5px;
+    transition: transform 0.2s, color 0.2s, visibility 0.2s, opacity 0.2s;
+}
+
+.not-trashing {
+    color: lightslategray;
+}
+
+.trashing {
+    transform: scale(1.1);
+    color: crimson;
 }
 
 #zoom-buttons {

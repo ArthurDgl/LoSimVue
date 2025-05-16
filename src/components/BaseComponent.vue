@@ -55,6 +55,7 @@ export default {
             this.zIndex = "1";
 
             this.dragging = true;
+            this.$parent.componentPickedUp(this.componentData);
 
             this.dragOffset = {
                 x: event.clientX - this.screenPosition.x,
@@ -65,6 +66,8 @@ export default {
             window.addEventListener("mouseup", this.stopDrag);
         },
         drag(event) {
+            this.$parent.mouseMove(event);
+
             window.getSelection()?.removeAllRanges();
             if (!this.dragging) {return;}
 
@@ -87,6 +90,8 @@ export default {
             this.zIndex = "auto";
 
             this.dragging = false;
+            this.$parent.componentPlacedDown(this.componentData);
+
             window.removeEventListener("mousemove", this.drag);
             window.removeEventListener("mouseup", this.stopDrag);
         },
