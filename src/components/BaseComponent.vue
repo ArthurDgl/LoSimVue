@@ -165,7 +165,7 @@ export default {
         @mousedown="this.startDrag"
         >
 
-        <div class="pin" v-for="(pin, index) in this.componentData.pins.inputs"
+        <div class="pin input" v-for="(pin, index) in this.componentData.pins.inputs"
         :style="{
                 'top':`${(index + 0.5) / (this.componentData.pins.inputs.length) * 100}%`,
                 'left':`${-this.borderWidth}px`,

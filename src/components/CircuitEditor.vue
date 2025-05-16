@@ -98,6 +98,11 @@ export default {
         handleKeydown(event) {
             this.keysPressed[event.key] = true;
 
+            if (this.keysPressed['Control']) {
+                this.controlKey(event.key);
+                return;
+            }
+
             if (event.key === ' ') {
                 this.startDragKeydown();
             }
@@ -116,6 +121,9 @@ export default {
         },
         handleKeyup(event) {
             this.keysPressed[event.key] = false;
+        },
+        controlKey(key) {
+
         },
         startDragKeydown() {
             this.startDrag();
@@ -495,7 +503,6 @@ export default {
                     }
 
                     this.connectPins(this.selectedOutput.parentId, this.selectedOutput.index, pin.parentId, pin.index, this.currentPath);
-                    console.log(this.currentPath);
                     this.currentPath = [];
                     this.selectedOutput = null;
                 }
@@ -557,6 +564,7 @@ export default {
             this.drawWires(canvas, ctx);
         },
         drawBackground(canvas, ctx) {
+            ctx.globalAlpha = 1;
             ctx.fillStyle = "darkslategray";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -573,6 +581,7 @@ export default {
             });
         },
         drawWires(canvas, ctx) {
+            ctx.globalAlpha = 1;
             ctx.lineWidth = this.scaleToZoom(3);
             this.wires.forEach(wire => {
                 const sourceComp = this.findComponentById(wire.sourceId);
@@ -593,11 +602,25 @@ export default {
 
             if (this.selectedOutput) {
                 ctx.strokeStyle = this.selectedOutput.state ? 'crimson' : 'rgb(80, 9, 23)';
+                ctx.globalAlpha = 0.5;
                 
                 const sourceVueComp = this.findComponentById(this.selectedOutput.parentId).vueComponent;
                 const start = this.worldToScreenCoordinates(sourceVueComp.getOutputPinPosition(this.selectedOutput.index));
+                
+                let pointerPosition = this.worldMousePosition;
+
+                const hoveredPinElement = document.querySelector('.input:hover');
+                if (hoveredPinElement) {
+                    const rect = hoveredPinElement.getBoundingClientRect();
+                    pointerPosition = this.screenToWorldCoordinates({x: rect.left + rect.width / 2, y: rect.top + rect.height / 2});
+
+                    if (this.currentPath[0]) {
+                        this.currentPath[this.currentPath.length - 1].y = pointerPosition.y;
+                    }
+                }
+
                 const lastKnown = this.currentPath[0] ? this.currentPath[this.currentPath.length - 1] : this.screenToWorldCoordinates(start);
-                const end = this.worldToScreenCoordinates(this.keysPressed.Shift ? this.projectOnAxes(lastKnown, this.worldMousePosition) : this.worldMousePosition);
+                const end = this.worldToScreenCoordinates(this.keysPressed.Shift ? this.projectOnAxes(lastKnown, pointerPosition) : pointerPosition);
 
                 ctx.beginPath();
                 ctx.moveTo(start.x, start.y);
