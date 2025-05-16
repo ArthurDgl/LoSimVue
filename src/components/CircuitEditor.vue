@@ -24,6 +24,8 @@ export default {
             zoomTarget: 1.0,
             zoomPosition: {x: 0, y: 0},
             zoomInterval: null,
+            dragOnCooldown: false,
+            cumulativeMovement: {x: 0, y: 0},
 
             baseComponentsData: [],
             temporaryComponent: null,
@@ -98,7 +100,7 @@ export default {
         handleKeydown(event) {
             this.keysPressed[event.key] = true;
 
-            if (this.keysPressed['Control']) {
+            if (this.keysPressed['Control']) {  
                 this.controlKey(event.key);
                 return;
             }
@@ -137,9 +139,21 @@ export default {
         },
         drag(event) {
             if (!this.dragging) return;
+            
+            this.cumulativeMovement.x += event.movementX;
+            this.cumulativeMovement.y += event.movementY;
+            
+            if (this.dragOnCooldown) {
+                return;
+            }
+            this.dragOnCooldown = true;
+            setTimeout(() => {this.dragOnCooldown = false}, 5);
 
-            this.camera.x -= event.movementX / this.zoom;
-            this.camera.y -= event.movementY / this.zoom;
+            this.camera.x -= this.cumulativeMovement.x / this.zoom;
+            this.camera.y -= this.cumulativeMovement.y / this.zoom;
+
+            this.cumulativeMovement.x = 0;
+            this.cumulativeMovement.y = 0;
 
             this.alteredCamera();
         },
@@ -601,33 +615,36 @@ export default {
             });
 
             if (this.selectedOutput) {
-                ctx.strokeStyle = this.selectedOutput.state ? 'crimson' : 'rgb(80, 9, 23)';
-                ctx.globalAlpha = 0.5;
-                
-                const sourceVueComp = this.findComponentById(this.selectedOutput.parentId).vueComponent;
-                const start = this.worldToScreenCoordinates(sourceVueComp.getOutputPinPosition(this.selectedOutput.index));
-                
-                let pointerPosition = this.worldMousePosition;
-
-                const hoveredPinElement = document.querySelector('.input:hover');
-                if (hoveredPinElement) {
-                    const rect = hoveredPinElement.getBoundingClientRect();
-                    pointerPosition = this.screenToWorldCoordinates({x: rect.left + rect.width / 2, y: rect.top + rect.height / 2});
-
-                    if (this.currentPath[0]) {
-                        this.currentPath[this.currentPath.length - 1].y = pointerPosition.y;
-                    }
-                }
-
-                const lastKnown = this.currentPath[0] ? this.currentPath[this.currentPath.length - 1] : this.screenToWorldCoordinates(start);
-                const end = this.worldToScreenCoordinates(this.keysPressed.Shift ? this.projectOnAxes(lastKnown, pointerPosition) : pointerPosition);
-
-                ctx.beginPath();
-                ctx.moveTo(start.x, start.y);
-                this.currentPath.map(point => {return this.worldToScreenCoordinates(point)}).forEach(point => {ctx.lineTo(point.x, point.y)});
-                ctx.lineTo(end.x, end.y);
-                ctx.stroke();
+                this.drawCurrentPath(canvas, ctx);
             }
+        },
+        drawCurrentPath(canvas, ctx) {
+            ctx.strokeStyle = this.selectedOutput.state ? 'crimson' : 'rgb(80, 9, 23)';
+            ctx.globalAlpha = 0.5;
+            
+            const sourceVueComp = this.findComponentById(this.selectedOutput.parentId).vueComponent;
+            const start = this.worldToScreenCoordinates(sourceVueComp.getOutputPinPosition(this.selectedOutput.index));
+            
+            let pointerPosition = this.worldMousePosition;
+
+            const hoveredPinElement = document.querySelector('.input:hover');
+            if (hoveredPinElement) {
+                const rect = hoveredPinElement.getBoundingClientRect();
+                pointerPosition = this.screenToWorldCoordinates({x: rect.left + rect.width / 2, y: rect.top + rect.height / 2});
+
+                if (this.currentPath[0]) {
+                    this.currentPath[this.currentPath.length - 1].y = pointerPosition.y;
+                }
+            }
+
+            const lastKnown = this.currentPath[0] ? this.currentPath[this.currentPath.length - 1] : this.screenToWorldCoordinates(start);
+            const end = this.worldToScreenCoordinates(this.keysPressed.Shift ? this.projectOnAxes(lastKnown, pointerPosition) : pointerPosition);
+
+            ctx.beginPath();
+            ctx.moveTo(start.x, start.y);
+            this.currentPath.map(point => {return this.worldToScreenCoordinates(point)}).forEach(point => {ctx.lineTo(point.x, point.y)});
+            ctx.lineTo(end.x, end.y);
+            ctx.stroke();
         },
         worldToScreenCoordinates(coordinates) {
             return {
