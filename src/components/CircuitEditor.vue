@@ -343,6 +343,10 @@ export default {
                         return behavior.state[resEval.key];
                     });
                 }
+                else {
+                    console.error("Unknown result evalutation type : " + resEval.type);
+                    evalFunctions.push((behavior, inputValues) => {});
+                }
             });
             
             return evalFunctions;

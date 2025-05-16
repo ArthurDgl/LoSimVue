@@ -12,5 +12,12 @@
         "type": "native",
         "file": "circuit-pins.json",
         "description": "Contains Input and Output pins used in recursive circuits"
+    },
+    {
+        "name": "Circuit Examples",
+        "id": 2,
+        "type": "native",
+        "file": "examples.json",
+        "description": "Contains simple circuit examples"
     }
 ]

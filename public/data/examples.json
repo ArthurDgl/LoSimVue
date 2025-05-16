@@ -1,0 +1,105 @@
+[
+    {
+        "name": "MUX",
+        "inputs": 3,
+        "outputs": 1,
+        "dimensions": {
+            "width": 75,
+            "height": 100
+        },
+        "resultEvaluations": [
+            {
+                "type": "CIRCUIT",
+                "pin": 0
+            }
+        ],
+        "circuit": {
+            "instances" : [
+                {
+                    "id": 0,
+                    "libraryId": 0,
+                    "name": "AND",
+                    "position": {
+                        "x": 200,
+                        "y": 100
+                    }
+                },
+                {
+                    "id": 1,
+                    "libraryId": 0,
+                    "name": "AND",
+                    "position": {
+                        "x": 200,
+                        "y": 200
+                    }
+                },
+                {
+                    "id": 2,
+                    "libraryId": 0,
+                    "name": "NOT",
+                    "position": {
+                        "x": 100,
+                        "y": 150
+                    }
+                },
+                {
+                    "id": 3,
+                    "libraryId": 0,
+                    "name": "OR",
+                    "position": {
+                        "x": 300,
+                        "y": 150
+                    }
+                },
+                {
+                    "id": 4,
+                    "libraryId": 1,
+                    "name": "IN",
+                    "position": {
+                        "x": 0,
+                        "y": 100
+                    }
+                },
+                {
+                    "id": 5,
+                    "libraryId": 1,
+                    "name": "IN",
+                    "position": {
+                        "x": 0,
+                        "y": 200
+                    }
+                },
+                {
+                    "id": 6,
+                    "libraryId": 1,
+                    "name": "IN",
+                    "position": {
+                        "x": 0,
+                        "y": 300
+                    }
+                },
+                {
+                    "id": 7,
+                    "libraryId": 1,
+                    "name": "OUT",
+                    "position": {
+                        "x": 400,
+                        "y": 150
+                    }
+                }
+            ],
+            "connections": [
+                {
+                    "sourceID": 4,
+                    "sourceIndex": 0,
+                    "destId": 0,
+                    "destIndex": 0,
+                    "path": []
+                }
+            ]
+        },
+        "render": {
+            "type": "DEFAULT"
+        }
+    }
+]
