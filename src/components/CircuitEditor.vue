@@ -824,20 +824,6 @@ export default {
             document.body.style.cursor = this.getMouseTool();
         },
         onLibrariesLoaded() {
-            this.addLibraryComponent(0, "AND", {x: 400, y: 100}); // 0
-            this.addLibraryComponent(0, "OR", {x: 400, y: 200});  // 1
-            this.addLibraryComponent(0, "NOT", {x: 600, y: 300}); // 2
-            this.addLibraryComponent(0, "XOR", {x: 400, y: 400}); // 3
-
-            this.addLibraryComponent(1, "IN", {x: 300, y: 200});  // 4
-            this.addLibraryComponent(1, "IN", {x: 300, y: 250});  // 5
-            this.addLibraryComponent(1, "OUT", {x: 800, y: 200}); // 6
-
-            this.connectPins(4, 0, 1, 0, []);
-            this.connectPins(5, 0, 1, 1, []);
-            this.connectPins(1, 0, 2, 0, []);
-            this.connectPins(2, 0, 6, 0, []);
-
             this.$nextTick(() => {
                 this.updateInterval = setInterval(() => {this.updateComponents(CURRENT_UPDATE_COUNT); CURRENT_UPDATE_COUNT += 1}, 10);
 
@@ -848,6 +834,7 @@ export default {
             });
         },
         updateComponents(updateCount) {
+            if (!this.$refs.baseComponents) return;
             this.$refs.baseComponents.forEach(baseComponent => {
                 baseComponent.updateLogic(updateCount);
             });
