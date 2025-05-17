@@ -126,18 +126,18 @@ export default {
                 }
             });
         },
-        updateOutputs() {
+        updateOutputs(updateCount) {
             let inputValues = [];
             this.componentData.pins.inputs.forEach((inputPin) => {
                 inputValues.push(inputPin.state);
             });
             this.componentData.pins.outputs.forEach((outputPin, index) => {
-                outputPin.state = this.componentData.behavior.resultFunctions[index](this.componentData.behavior, inputValues);
+                outputPin.state = this.componentData.behavior.resultFunctions[index](this.componentData.behavior, inputValues, updateCount);
             });
         },
-        updateLogic() {
+        updateLogic(updateCount) {
             this.fetchSources();
-            this.updateOutputs();
+            this.updateOutputs(updateCount);
             this.updateRendering();
         },
     },

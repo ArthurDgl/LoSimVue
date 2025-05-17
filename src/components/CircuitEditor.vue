@@ -6,7 +6,11 @@ const GRID_CELL_SIZE = 50;
 const LARGE_GRID_CELL_SIZE = 200;
 const MOUSE_TOOLS = ["default", "pointer", "crosshair"];
 
+const MIN_ZOOM = 0.25;
+const MAX_ZOOM = 4;
+
 let NEXT_COMPONENT_ID = 0;
+let CURRENT_UPDATE_COUNT = 0;
 
 export default {
     data() {
@@ -120,6 +124,30 @@ export default {
                 this.setMouseTool(2);
                 this.cancelPath();
             }
+            else if (event.key === '0') {
+                this.zoomTarget = 1.0;
+                this.zoomPosition = {
+                    x: this.width / 2,
+                    y: this.height / 2,
+                }
+                this.startZoom();
+            }
+            else if (event.key === '1') {
+                this.zoomTarget = MAX_ZOOM;
+                this.zoomPosition = {
+                    x: this.width / 2,
+                    y: this.height / 2,
+                }
+                this.startZoom();
+            }
+            else if (event.key === '2') {
+                this.zoomTarget = MIN_ZOOM;
+                this.zoomPosition = {
+                    x: this.width / 2,
+                    y: this.height / 2,
+                }
+                this.startZoom();
+            }
         },
         handleKeyup(event) {
             this.keysPressed[event.key] = false;
@@ -195,7 +223,7 @@ export default {
             this.alteredCamera();
         },
         zoomIn() {
-            if (this.zoomTarget >= 4) return;
+            if (this.zoomTarget >= MAX_ZOOM) return;
             this.zoomTarget *= this.zoomFactor;
             this.zoomPosition = {
                 x: this.width / 2,
@@ -204,7 +232,7 @@ export default {
             this.startZoom();
         },
         zoomOut() {
-            if (this.zoomTarget <= 0.25) return;
+            if (this.zoomTarget <= MIN_ZOOM) return;
             this.zoomTarget /= this.zoomFactor;
             this.zoomPosition = {
                 x: this.width / 2,
@@ -228,7 +256,7 @@ export default {
             const zoomChange = 1 - (event.deltaY * zoomSensitivity);
 
             const newZoomTarget = this.zoomTarget * zoomChange;
-            this.zoomTarget = Math.min(4, Math.max(0.25, newZoomTarget));
+            this.zoomTarget = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, newZoomTarget));
 
             this.startZoom();
         },
@@ -343,6 +371,33 @@ export default {
                         return behavior.state[resEval.key];
                     });
                 }
+                else if (resEval.type === "CIRCUIT") {
+                    evalFunctions.push((behavior, inputValues, updateCount) => {
+                        if (updateCount > behavior.circuit.lastUpdated) {
+                            behavior.circuit.lastUpdated = updateCount;
+
+                            behavior.circuit.inputReferences.forEach((circuitInput, index) => {
+                                circuitInput.behavior.state["value"] = inputValues[index];
+                            });
+
+                            behavior.circuit.components.forEach(component => {
+                                component.pins.inputs.forEach(inputPin => {
+                                    if (inputPin.source) inputPin.state = inputPin.source.state;
+                                });
+
+                                let inputValues = [];
+                                component.pins.inputs.forEach((inputPin) => {
+                                    inputValues.push(inputPin.state);
+                                });
+                                component.pins.outputs.forEach((outputPin, index) => {
+                                    outputPin.state = component.behavior.resultFunctions[index](component.behavior, inputValues, updateCount);
+                                });
+                            });
+                        }
+                        
+                        return behavior.circuit.outputReferences[resEval.pin].pins.inputs[0].state;
+                    });
+                }
                 else {
                     console.error("Unknown result evalutation type : " + resEval.type);
                     evalFunctions.push((behavior, inputValues) => {});
@@ -350,6 +405,54 @@ export default {
             });
             
             return evalFunctions;
+        },
+        parseCircuit(circuitBlueprint, behavior) {
+            circuitBlueprint.instances.sort((instanceA, instanceB) => {
+                return instanceA.id - instanceB.id;
+            })
+
+            behavior.circuit = {
+                lastUpdated: 0,
+                components: [],
+                inputReferences: [],
+                outputReferences: [],
+                wires: []
+            }
+
+            const idOffset = NEXT_COMPONENT_ID;
+
+            circuitBlueprint.instances.forEach(instance => {
+                const newComponent = this.newLibraryComponent(instance.libraryId, instance.name, instance.position);
+                behavior.circuit.components.push(newComponent);
+                if (newComponent.behavior.libraryId == 1) {
+                    if (newComponent.behavior.name === "IN") {
+                        behavior.circuit.inputReferences.push(newComponent);
+                    }
+                    else if (newComponent.behavior.name === "OUT") {
+                        behavior.circuit.outputReferences.push(newComponent);
+                    }
+                }
+            });
+
+            circuitBlueprint.connections.forEach(connection => {
+                const sourceId = connection.sourceId + idOffset;
+                const destId = connection.destId + idOffset;
+
+                const sourceComp = behavior.circuit.components.find(comp => {return comp.id == sourceId});
+                const destComp = behavior.circuit.components.find(comp => {return comp.id == destId});
+
+                destComp.pins.inputs[connection.destIndex].source = sourceComp.pins.outputs[connection.sourceIndex];
+
+                let wire = {
+                    sourceId: sourceId,
+                    sourceIndex: connection.sourceIndex,
+                    destId: destId,
+                    destIndex: connection.destIndex,
+                    path: connection.path,
+                };
+
+                behavior.circuit.wires.push(wire);
+            });
         },
         newLibraryComponent(libraryId, componentName, position) {
             let behavior = {
@@ -361,6 +464,11 @@ export default {
             behavior.inputs = libraryComponent.inputs;
             behavior.outputs = libraryComponent.outputs;
             behavior.name = libraryComponent.name;
+            behavior.libraryId = libraryId;
+
+            if (libraryComponent.circuit) {
+                this.parseCircuit(libraryComponent.circuit, behavior);
+            }
 
             behavior.resultFunctions = this.parseResultEvaluations(libraryComponent.resultEvaluations, behavior);
 
@@ -731,7 +839,7 @@ export default {
             this.connectPins(2, 0, 6, 0, []);
 
             this.$nextTick(() => {
-                this.updateInterval = setInterval(this.updateComponents, 10);
+                this.updateInterval = setInterval(() => {this.updateComponents(CURRENT_UPDATE_COUNT); CURRENT_UPDATE_COUNT += 1}, 10);
 
                 this.alteredCamera();
                 this.$nextTick(() => {
@@ -739,9 +847,9 @@ export default {
                 })
             });
         },
-        updateComponents() {
+        updateComponents(updateCount) {
             this.$refs.baseComponents.forEach(baseComponent => {
-                baseComponent.updateLogic();
+                baseComponent.updateLogic(updateCount);
             });
             this.updateCanvas();
         },

@@ -90,9 +90,58 @@
             ],
             "connections": [
                 {
-                    "sourceID": 4,
+                    "sourceId": 4,
                     "sourceIndex": 0,
                     "destId": 0,
+                    "destIndex": 0,
+                    "path": []
+                },
+                {
+                    "sourceId": 5,
+                    "sourceIndex": 0,
+                    "destId": 1,
+                    "destIndex": 0,
+                    "path": []
+                },
+                {
+                    "sourceId": 6,
+                    "sourceIndex": 0,
+                    "destId": 1,
+                    "destIndex": 1,
+                    "path": []
+                },
+                {
+                    "sourceId": 6,
+                    "sourceIndex": 0,
+                    "destId": 2,
+                    "destIndex": 0,
+                    "path": []
+                },
+                {
+                    "sourceId": 2,
+                    "sourceIndex": 0,
+                    "destId": 0,
+                    "destIndex": 1,
+                    "path": []
+                },
+                {
+                    "sourceId": 0,
+                    "sourceIndex": 0,
+                    "destId": 3,
+                    "destIndex": 0,
+                    "path": []
+                },
+                {
+                    "sourceId": 1,
+                    "sourceIndex": 0,
+                    "destId": 3,
+                    "destIndex": 1,
+                    "path": []
+                },
+                {
+                    "sourceId": 3,
+                    "sourceIndex": 0,
+                    "destId": 7,
                     "destIndex": 0,
                     "path": []
                 }
