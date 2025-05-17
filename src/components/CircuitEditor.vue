@@ -113,6 +113,7 @@ export default {
                 this.startDragKeydown();
             }
             else if (event.key === 'Escape' || event.key === 'z') {
+                this.temporaryComponent = null;
                 this.setMouseTool(0);
                 this.cancelPath();
             }
@@ -512,6 +513,11 @@ export default {
                 this.baseComponentsData.push(this.temporaryComponent);
                 this.temporaryComponent = null;
 
+                if (this.keysPressed['Shift']) {
+                    const last = this.baseComponentsData[this.baseComponentsData.length - 1];
+                    this.setTemporaryComponent(last.behavior.libraryId, last.behavior.name);
+                }
+
                 this.$nextTick(() => {this.alteredCamera()});
             }
         },
@@ -580,6 +586,11 @@ export default {
             this.selectedOutput = null;
         },
         clickBackground(event) {
+            if (this.temporaryComponent) {
+                this.placeTemporaryComponent();
+                return;
+            }
+
             if (!this.selectedOutput) {
                 return;
             }
@@ -780,6 +791,17 @@ export default {
             else {
                 return {x: origin.x, y: point.y};
             }
+        },
+        snapToGrid(position, offset, snapResolution) {
+            if (!snapResolution) snapResolution = 50;
+            if (!offset) offset = {x: 0, y: 0};
+
+            position = {x: position.x + offset.x, y: position.y + offset.y};
+
+            return {
+                x: position.x - ((position.x % snapResolution) + snapResolution) % snapResolution,
+                y: position.y - ((position.y % snapResolution) + snapResolution) % snapResolution
+            };
         },
         componentPickedUp(component) {
             this.showTrashBin = true;

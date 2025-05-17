@@ -28,6 +28,10 @@ export default {
     },
     methods: {
         moveWithCamera() {
+            if (this.$parent.keysPressed['Control']) {
+                this.componentData.position = this.$parent.snapToGrid(this.componentData.position, {x: this.componentData.width / 2, y: this.componentData.height / 2});
+            }
+
             this.screenPosition = this.$parent.worldToScreenCoordinates(this.componentData.position);
 
             this.borderRadius = this.$parent.scaleToZoom(DEFAULT_BORDER_RADIUS);
