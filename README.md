@@ -13,8 +13,8 @@ Current Progress (accessible at http://dugnolle.fr:3000) :
 
 ### Mouse Tools
 Click the **tools button** at the top of the screen to cycle between tools (**default**, **poke**, **connect**)\
-**Default** is for most editing tasks
-**Poke** is for user-circuit interaction
+**Default** is for most editing tasks\
+**Poke** is for user-circuit interaction\
 **Connect** is for drawing wires
 
 ### Camera Movements
