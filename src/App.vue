@@ -89,6 +89,9 @@ export default {
     closePopup(popupId) {
       this.popups = this.popups.filter(popup => {return popup.id != popupId});
     },
+    closePopupsByTitle(title) {
+      this.popups = this.popups.filter(popup => {return popup.title !== title});
+    }
   },
   mounted() {
     window.addEventListener("resize", this.updateDimensions);
@@ -99,36 +102,36 @@ export default {
 
     this.loadLibraries();
 
-    this.addPopup({
-      title: "Test Popup",
-      position: {x: 200, y: 200},
-      data: {
-        name: ""
-      },
-      contents: [
-        {
-          type: "TEXT",
-          text: "This is a test popup !"
-        },
-        {
-          type: "INPUT",
-          key: "name",
-          placeholder: "Enter your name"
-        }
-      ],
-      options: [
-        {
-          color: "#6688FA",
-          name: "Say Hello",
-          onClick: (popup, app) => {console.log(`Hello ${popup.data.name} !`);}
-        },
-        {
-          color: "#FA5544",
-          name: "Cancel",
-          onClick: (popup, app) => {console.log("Action cancelled !");}
-        }
-      ]
-    });
+    // this.addPopup({
+    //   title: "Test Popup",
+    //   position: {x: 200, y: 200},
+    //   data: {
+    //     name: ""
+    //   },
+    //   contents: [
+    //     {
+    //       type: "TEXT",
+    //       text: "This is a test popup !"
+    //     },
+    //     {
+    //       type: "INPUT",
+    //       key: "name",
+    //       placeholder: "Enter your name"
+    //     }
+    //   ],
+    //   options: [
+    //     {
+    //       color: "#6688FA",
+    //       name: "Say Hello",
+    //       onClick: (popup, app) => {console.log(`Hello ${popup.data.name} !`);}
+    //     },
+    //     {
+    //       color: "#FA5544",
+    //       name: "Cancel",
+    //       onClick: (popup, app) => {console.log("Action cancelled !");}
+    //     }
+    //   ]
+    // });
 
     console.log("App Mounted");
   },

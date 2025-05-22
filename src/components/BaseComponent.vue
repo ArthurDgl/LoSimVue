@@ -131,57 +131,6 @@ export default {
                 }
             });
         },
-        // Helper function made using ChatGPT
-        lightenColor(color, amount = 20) {
-            const clamp = (val) => Math.max(0, Math.min(255, val));
-
-            function hexToRgb(hex) {
-                hex = hex.replace(/^#/, '');
-                if (hex.length === 3) {
-                hex = hex.split('').map(char => char + char).join('');
-                }
-                const bigint = parseInt(hex, 16);
-                return {
-                r: (bigint >> 16) & 255,
-                g: (bigint >> 8) & 255,
-                b: bigint & 255
-                };
-            }
-
-            function rgbStringToRgb(rgbStr) {
-                const result = rgbStr.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/i);
-                return result ? {
-                r: parseInt(result[1]),
-                g: parseInt(result[2]),
-                b: parseInt(result[3])
-                } : null;
-            }
-
-            function rgbToHex(r, g, b) {
-                return (
-                '#' +
-                [r, g, b]
-                    .map((x) => clamp(x).toString(16).padStart(2, '0'))
-                    .join('')
-                );
-            }
-
-            let rgb;
-
-            if (color.startsWith('#')) {
-                rgb = hexToRgb(color);
-            } else if (color.startsWith('rgb')) {
-                rgb = rgbStringToRgb(color);
-            } else {
-                throw new Error('Unsupported color format');
-            }
-
-            const newR = clamp(rgb.r + amount);
-            const newG = clamp(rgb.g + amount);
-            const newB = clamp(rgb.b + amount);
-
-            return rgbToHex(newR, newG, newB);
-        },
         updateOutputs(updateCount) {
             let inputValues = [];
             this.componentData.pins.inputs.forEach((inputPin) => {
@@ -221,7 +170,7 @@ export default {
         'zIndex':`${this.zIndex}`,
         'fontSize':`${this.fontSize}px`,
         'background-color':`${this.color}`,
-        'border-color':`${this.borderColor ? this.borderColor : this.lightenColor(this.color)}`
+        'border-color':`${this.borderColor ? this.borderColor : this.$parent.lightenColor(this.color)}`
         }"
         
         @click="this.handleClick"

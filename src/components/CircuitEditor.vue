@@ -874,6 +874,114 @@ export default {
                 this.$refs.tempBaseComponent.moveWithCamera(this.camera, this.zoom, this.width, this.height);
             }
         },
+        // Helper function made using ChatGPT
+        lightenColor(color, amount = 20) {
+            const clamp = (val) => Math.max(0, Math.min(255, val));
+
+            function hexToRgb(hex) {
+                hex = hex.replace(/^#/, '');
+                if (hex.length === 3) {
+                hex = hex.split('').map(char => char + char).join('');
+                }
+                const bigint = parseInt(hex, 16);
+                return {
+                r: (bigint >> 16) & 255,
+                g: (bigint >> 8) & 255,
+                b: bigint & 255
+                };
+            }
+
+            function rgbStringToRgb(rgbStr) {
+                const result = rgbStr.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/i);
+                return result ? {
+                r: parseInt(result[1]),
+                g: parseInt(result[2]),
+                b: parseInt(result[3])
+                } : null;
+            }
+
+            function rgbToHex(r, g, b) {
+                return (
+                '#' +
+                [r, g, b]
+                    .map((x) => clamp(x).toString(16).padStart(2, '0'))
+                    .join('')
+                );
+            }
+
+            let rgb;
+
+            if (color.startsWith('#') && color.length == 7) {
+                rgb = hexToRgb(color);
+            } else if (color.startsWith('rgb(') && color.endsWith(')')) {
+                rgb = rgbStringToRgb(color);
+            } else {
+                rgb = null;
+            }
+
+            if (!rgb) return null;
+
+            const newR = clamp(rgb.r + amount);
+            const newG = clamp(rgb.g + amount);
+            const newB = clamp(rgb.b + amount);
+
+            return rgbToHex(newR, newG, newB);
+        },
+        openSavePopup(event) {
+            const title = "Save Circuit";
+            const mousePosition = this.worldToScreenCoordinates(this.worldMousePosition);
+
+            this.$parent.closePopupsByTitle(title);
+
+            this.$parent.addPopup({
+                title: title,
+                position: {x: mousePosition.x + 50, y: mousePosition.y + 50},
+                data: {
+                    name: "",
+                    color: ""
+                },
+                contents: [
+                    {
+                        type: "INPUT",
+                        key: "name",
+                        placeholder: "Enter circuit name",
+                        strictFormat: true
+                    },
+                    {
+                        type: "INPUT",
+                        key: "color",
+                        placeholder: "Enter circuit color"
+                    }
+                ],
+                options: [
+                    {
+                        color: "#6688FA",
+                        name: "Save",
+                        onClick: (popup, app) => {
+                            if (popup.data.name.length > 0 && this.lightenColor(popup.data.color)) {
+                                this.saveCurrentCircuit(popup.data.name, popup.data.color);
+                            }
+                            else {
+                                if (popup.contents.length < 3) popup.contents.push({});
+                                popup.contents[2] = {
+                                    type: "TEXT",
+                                    text: "Missing name or Invalid color format : use #12AB34 or rgb(12, AB, 34)"
+                                }
+                                return true;
+                            }
+                        }
+                    },
+                    {
+                        color: "#FA5544",
+                        name: "Cancel",
+                        onClick: (popup, app) => {}
+                    }
+                ]
+            });
+        },
+        saveCurrentCircuit(name, color) {
+            console.log(`Saving circuit "${name}" with color ${color}...`);
+        },
     },
     emits: ['mounted'],
     mounted() {
@@ -920,7 +1028,7 @@ export default {
             <font-awesome-icon :icon="['fas', 'hand-pointer']" v-else-if="this.mouseToolIndex == 1"/>
             <font-awesome-icon :icon="['fas', 'network-wired']" v-else-if="this.mouseToolIndex == 2"/>
         </button>
-        <button>
+        <button @mousedown="this.openSavePopup">
             <font-awesome-icon :icon="['fas', 'floppy-disk']" />
         </button>
     </div>

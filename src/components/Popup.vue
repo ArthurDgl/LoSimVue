@@ -6,11 +6,43 @@ export default {
     emits: ["mounted"],
     data() {
         return {
-
+            isDragging: false,
+            offset: { x: 0, y: 0 },
+            interval: null,
+            lastMousePos: {x: 0, y: 0},
         };
     },
     methods: {
-        
+        startDrag(event) {
+            this.isDragging = true;
+            this.offset.x = event.clientX - this.popupData.position.x;
+            this.offset.y = event.clientY - this.popupData.position.y;
+            this.updateMousePos(event);
+            this.interval = setInterval(this.drag, 5);
+            document.addEventListener("mousemove", this.updateMousePos);
+            document.addEventListener("mouseup", this.stopDrag);
+            document.body.style.userSelect = 'none';
+        },
+        updateMousePos(event) {
+            this.lastMousePos.x = event.clientX;
+            this.lastMousePos.y = event.clientY;
+        },
+        drag() {
+            if (this.isDragging) {
+                this.popupData.position.x = this.lerp(this.popupData.position.x, this.lastMousePos.x - this.offset.x, 0.1);
+                this.popupData.position.y = this.lerp(this.popupData.position.y, this.lastMousePos.y - this.offset.y, 0.1);
+            }
+        },
+        stopDrag() {
+            this.isDragging = false;
+            clearInterval(this.interval);
+            document.removeEventListener("mousemove", this.updateMousePos);
+            document.removeEventListener("mouseup", this.stopDrag);
+            document.body.style.userSelect = 'auto';
+        },
+        lerp(a, b, t) {
+            return (1 - t)*a + t*b;
+        },
     },
     mounted() {
         this.$emit("mounted");
@@ -24,7 +56,7 @@ export default {
         'top': `${this.popupData.position.y}px`,
     }"
     >
-        <div class="title-bar">
+        <div class="title-bar" @mousedown="this.startDrag">
             {{ this.popupData.title }}
         </div>
         <div class="contents">
@@ -33,9 +65,11 @@ export default {
                 <input class="input-element"
                 v-if="content.type === 'INPUT'"
                 :value="this.popupData.data[content.key]"
-                @input="e => this.popupData.data[content.key] = e.target.value"
+                @input="e => this.popupData.data[content.key] = content.strictFormat ? e.target.value.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase() : e.target.value"
+                @keydown="event => event.stopPropagation()"
                 :placeholder="content.placeholder"
                 autocomplete="off"
+                spellcheck="false"
                 aria-autocomplete="list"
                 ></input>
             </div>
@@ -44,7 +78,7 @@ export default {
                 <button class="end-button" v-for="button in this.popupData.options" :style="{
                     'background-color': `${button.color}`
                 }"
-                @click="() => {button.onClick(this.popupData, this.$parent); this.$parent.closePopup(this.popupData.id)}"
+                @click="() => {if (!button.onClick(this.popupData, this.$parent)) this.$parent.closePopup(this.popupData.id)}"
                 >
                     {{ button.name }}
                 </button>
@@ -74,6 +108,7 @@ export default {
 .contents {
     padding: 10px;
     color: lightgray;
+    width: min-content;
 }
 
 .content-element {
@@ -107,5 +142,6 @@ export default {
     margin-right: 5px;
     flex-grow: 1;
     outline: none;
+    color: aliceblue;
 }
 </style>
