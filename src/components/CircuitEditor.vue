@@ -425,7 +425,7 @@ export default {
             circuitBlueprint.instances.forEach(instance => {
                 const newComponent = this.newLibraryComponent(instance.libraryId, instance.name, instance.position);
                 behavior.circuit.components.push(newComponent);
-                if (newComponent.behavior.libraryId == 1) {
+                if (newComponent.behavior.libraryId == 2) {
                     if (newComponent.behavior.name === "IN") {
                         behavior.circuit.inputReferences.push(newComponent);
                     }
@@ -919,6 +919,9 @@ export default {
             <font-awesome-icon :icon="['fas', 'arrow-pointer']" v-if="this.mouseToolIndex == 0"/>
             <font-awesome-icon :icon="['fas', 'hand-pointer']" v-else-if="this.mouseToolIndex == 1"/>
             <font-awesome-icon :icon="['fas', 'network-wired']" v-else-if="this.mouseToolIndex == 2"/>
+        </button>
+        <button>
+            <font-awesome-icon :icon="['fas', 'floppy-disk']" />
         </button>
     </div>
 

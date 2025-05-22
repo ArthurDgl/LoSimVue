@@ -1,6 +1,9 @@
 <script>
 import CircuitEditor from './components/CircuitEditor.vue';
 import LibraryWindow from './components/LibraryWindow.vue';
+import Popup from './components/Popup.vue';
+
+let CURRENT_POPUP_ID = 0;
 
 export default {
   data() {
@@ -9,6 +12,8 @@ export default {
       height: window.innerHeight,
 
       libraries: [],
+
+      popups: [],
     };
   },
   methods: {
@@ -39,7 +44,10 @@ export default {
             lib.hide = true;
           });
 
-          const libraryPromises = this.libraries.map(library =>
+          this.libraries.forEach(library => {library.content = []});
+          this.libraries[0].hide = false; // Project library tab defaults to open
+
+          const libraryPromises = this.libraries.filter(library => {return library.type === "native"}).map(library =>
             this.loadLibrary(library.file).then(content => {
               library.content = content;
             })
@@ -73,6 +81,14 @@ export default {
     selectLibraryComponent(libraryId, componentName) {
       this.$refs.editor.setTemporaryComponent(libraryId, componentName);
     },
+    addPopup(popupData) {
+      popupData.id = CURRENT_POPUP_ID;
+      CURRENT_POPUP_ID += 1;
+      this.popups.push(popupData);
+    },
+    closePopup(popupId) {
+      this.popups = this.popups.filter(popup => {return popup.id != popupId});
+    },
   },
   mounted() {
     window.addEventListener("resize", this.updateDimensions);
@@ -83,11 +99,43 @@ export default {
 
     this.loadLibraries();
 
+    this.addPopup({
+      title: "Test Popup",
+      position: {x: 200, y: 200},
+      data: {
+        name: ""
+      },
+      contents: [
+        {
+          type: "TEXT",
+          text: "This is a test popup !"
+        },
+        {
+          type: "INPUT",
+          key: "name",
+          placeholder: "Enter your name"
+        }
+      ],
+      options: [
+        {
+          color: "#6688FA",
+          name: "Say Hello",
+          onClick: (popup, app) => {console.log(`Hello ${popup.data.name} !`);}
+        },
+        {
+          color: "#FA5544",
+          name: "Cancel",
+          onClick: (popup, app) => {console.log("Action cancelled !");}
+        }
+      ]
+    });
+
     console.log("App Mounted");
   },
   components: {
     CircuitEditor,
-    LibraryWindow
+    LibraryWindow,
+    Popup
   }
 }
 </script>
@@ -95,6 +143,7 @@ export default {
 <template>
   <CircuitEditor ref="editor" @mounted="this.updateDimensions"/>
   <LibraryWindow ref="library" :libraries="this.libraries" @mounted="this.updateDimensions"/>
+  <Popup ref="popups" v-for="popup in this.popups" :key="popup.id" :popupData="popup"/>
 </template>
 
 <style scoped>

@@ -1,21 +1,27 @@
 [
     {
-        "name": "Logic Gates",
+        "name": "Project",
         "id": 0,
+        "type": "project",
+        "description": "Where all circuits created by the user are stored"
+    },
+    {
+        "name": "Logic Gates",
+        "id": 1,
         "type": "native",
         "file": "gates.json",
         "description": "Contains the basic logic gates : AND, OR, NOT, XOR, NAND, NOR"
     },
     {
         "name": "Circuit Pins",
-        "id": 1,
+        "id": 2,
         "type": "native",
         "file": "circuit-pins.json",
         "description": "Contains Input and Output pins used in recursive circuits"
     },
     {
         "name": "Circuit Examples",
-        "id": 2,
+        "id": 3,
         "type": "native",
         "file": "examples.json",
         "description": "Contains simple circuit examples"

@@ -17,7 +17,7 @@
             "instances" : [
                 {
                     "id": 0,
-                    "libraryId": 0,
+                    "libraryId": 1,
                     "name": "AND",
                     "position": {
                         "x": 200,
@@ -26,7 +26,7 @@
                 },
                 {
                     "id": 1,
-                    "libraryId": 0,
+                    "libraryId": 1,
                     "name": "AND",
                     "position": {
                         "x": 200,
@@ -35,7 +35,7 @@
                 },
                 {
                     "id": 2,
-                    "libraryId": 0,
+                    "libraryId": 1,
                     "name": "NOT",
                     "position": {
                         "x": 100,
@@ -44,7 +44,7 @@
                 },
                 {
                     "id": 3,
-                    "libraryId": 0,
+                    "libraryId": 1,
                     "name": "OR",
                     "position": {
                         "x": 300,
@@ -53,7 +53,7 @@
                 },
                 {
                     "id": 4,
-                    "libraryId": 1,
+                    "libraryId": 2,
                     "name": "IN",
                     "position": {
                         "x": 0,
@@ -62,7 +62,7 @@
                 },
                 {
                     "id": 5,
-                    "libraryId": 1,
+                    "libraryId": 2,
                     "name": "IN",
                     "position": {
                         "x": 0,
@@ -71,7 +71,7 @@
                 },
                 {
                     "id": 6,
-                    "libraryId": 1,
+                    "libraryId": 2,
                     "name": "IN",
                     "position": {
                         "x": 0,
@@ -80,7 +80,7 @@
                 },
                 {
                     "id": 7,
-                    "libraryId": 1,
+                    "libraryId": 2,
                     "name": "OUT",
                     "position": {
                         "x": 400,
