@@ -35,3 +35,24 @@ While using the **connection mouse tool** :\
 **Holding Shift** while connecting makes **straight wires** (click to add intermediary nodes)\
 New connections **overwrite** old ones\
 Attempting to connect two pins that are **already connected** will **remove the current wire**
+
+
+# Planned Features
+
+### Save circuits into their own blocks
+
+### Start new wire from existing wire
+
+### Edit wires
+
+### Wires follow attached components
+
+### Popups and Tooltips
+
+### Multi-element select for move and delete
+
+### Mobile support
+
+### Custom Libraries
+
+
