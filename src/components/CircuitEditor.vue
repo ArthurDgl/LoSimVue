@@ -466,6 +466,8 @@ export default {
             behavior.outputs = libraryComponent.outputs;
             behavior.name = libraryComponent.name;
             behavior.libraryId = libraryId;
+            behavior.defaultColor = libraryComponent.color;
+            behavior.defaultBorderColor = libraryComponent.borderColor;
 
             if (libraryComponent.circuit) {
                 this.parseCircuit(libraryComponent.circuit, behavior);
@@ -635,7 +637,7 @@ export default {
                     }
 
                     if (this.currentPath[0]) {
-                        const pinPosition = this.$refs.baseComponents[pin.parentId].getInputPinPosition(pin.index);
+                        const pinPosition = this.findComponentById(pin.parentId).vueComponent.getInputPinPosition(pin.index);
                         this.currentPath[this.currentPath.length - 1] = this.projectOnAxes(pinPosition, this.currentPath[this.currentPath.length - 1]);
                     }
 
@@ -705,7 +707,7 @@ export default {
             ctx.fillStyle = "darkslategray";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            ctx.fillStyle = "lightslategray";
+            ctx.fillStyle = this.zoom > 0.66 ? "lightslategray" : "rgb(95, 108, 122)";
 
             const columns = this.getColumns();
             columns.forEach(col => {
