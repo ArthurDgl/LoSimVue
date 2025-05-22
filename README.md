@@ -55,4 +55,4 @@ Attempting to connect two pins that are **already connected** will **remove the 
 
 ### Custom Libraries
 
-
+### Basic VHDL Support
