@@ -81,6 +81,9 @@ export default {
     selectLibraryComponent(libraryId, componentName) {
       this.$refs.editor.setTemporaryComponent(libraryId, componentName);
     },
+    addProjectComponent(component) {
+      this.libraries[0].content.push(component);
+    },
     addPopup(popupData) {
       popupData.id = CURRENT_POPUP_ID;
       CURRENT_POPUP_ID += 1;

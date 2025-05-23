@@ -29,7 +29,7 @@ export default {
     },
     methods: {
         moveWithCamera() {
-            if (this.$parent.keysPressed['Control']) {
+            if (this.$parent.keysPressed['Control'] && this.componentData.temporary) {
                 this.componentData.position = this.$parent.snapToGrid(this.componentData.position, {x: this.componentData.width / 2, y: this.componentData.height / 2});
             }
 

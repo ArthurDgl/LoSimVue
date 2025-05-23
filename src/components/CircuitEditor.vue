@@ -104,7 +104,7 @@ export default {
         handleKeydown(event) {
             this.keysPressed[event.key] = true;
 
-            if (this.keysPressed['Control']) {  
+            if (this.keysPressed['Control']) {
                 this.controlKey(event.key);
                 return;
             }
@@ -156,7 +156,7 @@ export default {
         controlKey(key) {
 
         },
-        startDragKeydown() {
+        startDragKeydown() { 
             this.startDrag();
             window.addEventListener("keyup", event => {if (event.key !== ' ') return; this.stopDrag()});
         },
@@ -420,11 +420,12 @@ export default {
                 wires: []
             }
 
-            const idOffset = NEXT_COMPONENT_ID;
+            const idMap = {}
 
             circuitBlueprint.instances.forEach(instance => {
                 const newComponent = this.newLibraryComponent(instance.libraryId, instance.name, instance.position);
                 behavior.circuit.components.push(newComponent);
+                idMap[instance.id] = newComponent;
                 if (newComponent.behavior.libraryId == 2) {
                     if (newComponent.behavior.name === "IN") {
                         behavior.circuit.inputReferences.push(newComponent);
@@ -436,18 +437,15 @@ export default {
             });
 
             circuitBlueprint.connections.forEach(connection => {
-                const sourceId = connection.sourceId + idOffset;
-                const destId = connection.destId + idOffset;
-
-                const sourceComp = behavior.circuit.components.find(comp => {return comp.id == sourceId});
-                const destComp = behavior.circuit.components.find(comp => {return comp.id == destId});
+                const sourceComp = idMap[connection.sourceId];
+                const destComp = idMap[connection.destId];
 
                 destComp.pins.inputs[connection.destIndex].source = sourceComp.pins.outputs[connection.sourceIndex];
 
                 let wire = {
-                    sourceId: sourceId,
+                    sourceId: sourceComp.id,
                     sourceIndex: connection.sourceIndex,
-                    destId: destId,
+                    destId: destComp.id,
                     destIndex: connection.destIndex,
                     path: connection.path,
                 };
@@ -682,6 +680,12 @@ export default {
 
             this.wires.push(wire);
         },
+        getComponentsByName(circuitName) {
+            return this.baseComponentsData.filter(comp => {return comp.behavior.name === circuitName});
+        },
+        countComponentsByName(circuitName) {
+            return this.getComponentsByName(circuitName).length;
+        },
         alteredCamera() {
             this.updateComponentPositions();
             this.updateCanvas();
@@ -798,11 +802,11 @@ export default {
             if (!snapResolution) snapResolution = 50;
             if (!offset) offset = {x: 0, y: 0};
 
-            position = {x: position.x + offset.x, y: position.y + offset.y};
+            const offsetPosition = {x: position.x + offset.x, y: position.y + offset.y};
 
             return {
-                x: position.x - ((position.x % snapResolution) + snapResolution) % snapResolution,
-                y: position.y - ((position.y % snapResolution) + snapResolution) % snapResolution
+                x: offsetPosition.x - ((offsetPosition.x % snapResolution) + snapResolution) % snapResolution,
+                y: offsetPosition.y - ((offsetPosition.y % snapResolution) + snapResolution) % snapResolution
             };
         },
         componentPickedUp(component) {
@@ -927,6 +931,10 @@ export default {
 
             return rgbToHex(newR, newG, newB);
         },
+        clearEditor() {
+            this.baseComponentsData.length = 0;
+            this.wires.length = 0;
+        },
         openSavePopup(event) {
             const title = "Save Circuit";
             const mousePosition = this.worldToScreenCoordinates(this.worldMousePosition);
@@ -981,6 +989,56 @@ export default {
         },
         saveCurrentCircuit(name, color) {
             console.log(`Saving circuit "${name}" with color ${color}...`);
+
+            const inputs = this.getComponentsByName("IN");
+            const outputs = this.getComponentsByName("OUT");
+
+            const newLibraryComponent = {
+                name: name,
+                inputs: inputs.length,
+                outputs: outputs.length,
+                dimensions: {
+                    width: (name.length / 3 + 0.5) * 50,
+                    height: Math.max(50, (Math.max(inputs.length, outputs.length) / 2) * 50)
+                },
+                color: color,
+                render: {
+                    type: "DEFAULT"
+                },
+                resultEvaluations: outputs.map((pin, index) => {return {type: "CIRCUIT", pin: index}}),
+                circuit: {
+                    instances: this.baseComponentsData.map(component => {
+                        return {
+                            id: component.id,
+                            libraryId: component.behavior.libraryId,
+                            name: component.behavior.name,
+                            position: {
+                                x: component.position.x,
+                                y: component.position.y
+                            }
+                        }
+                    }),
+                    connections: this.wires.map(wire => {
+                        return {
+                            sourceId: wire.sourceId,
+                            sourceIndex: wire.sourceIndex,
+                            destId: wire.destId,
+                            destIndex: wire.destIndex,
+                            path: wire.path.map(point => {
+                                return {
+                                    x: point.x,
+                                    y: point.y
+                                }
+                            })
+                        }
+                    })
+                }
+            };
+
+            console.log(newLibraryComponent);
+
+            this.$parent.addProjectComponent(newLibraryComponent);
+            this.clearEditor();
         },
     },
     emits: ['mounted'],
