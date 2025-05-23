@@ -5,7 +5,7 @@
 This is a web-based logic simulator inspired by Sebastian Lague's videos and my Electronics classes.\
 First version was prototyped in p5js, this is the official one.
 
-Current Progress (accessible at http://dugnolle.fr:3000) :
+Current Progress (accessible at ~~http://dugnolle.fr:3000~~ :/ not right now) :
 ![image](https://github.com/user-attachments/assets/7dbbe72f-4c2b-4363-ade6-a51d57f79e54)
 
 
