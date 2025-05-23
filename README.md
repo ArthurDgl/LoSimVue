@@ -36,10 +36,19 @@ While using the **connection mouse tool** :\
 New connections **overwrite** old ones\
 Attempting to connect two pins that are **already connected** will **remove the current wire**
 
+### Saving Components
+To save current circuit into its own component :\
+Press the **floppy disk** button at the **top of the screen**\
+Then enter the necessary information and press **Save**
+
+### Popups
+Some actions trigger popups to give additional information or give choices
 
 # Planned Features
 
-### Save circuits into their own blocks
+### Pin top-down order and labels
+
+### Edit existing components
 
 ### Start new wire from existing wire
 
@@ -47,9 +56,11 @@ Attempting to connect two pins that are **already connected** will **remove the 
 
 ### Wires follow attached components
 
-### Popups and Tooltips
+### Tooltips
 
 ### Multi-element select for move and delete
+
+### Multi-bit pins and wires
 
 ### Mobile support
 
