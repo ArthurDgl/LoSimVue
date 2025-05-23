@@ -67,3 +67,9 @@ Some actions trigger popups to give additional information or give choices
 ### Custom Libraries
 
 ### Basic VHDL Support
+
+### Save Project
+
+### SVG Component Rendering
+
+### Canvas Rendering
