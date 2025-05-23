@@ -72,6 +72,7 @@ export default {
                 spellcheck="false"
                 aria-autocomplete="list"
                 ></input>
+                <div class="color-display-element" v-if="content.type === 'COLOR_DISPLAY'" :style="{'background-color': `${this.popupData.data[content.key]}`}"></div>
             </div>
 
             <div class="buttons">
@@ -124,6 +125,11 @@ export default {
     font-weight: bold;
     padding: 5px;
     color: lightgray;
+}
+
+.color-display-element {
+    height: 30px;
+    border: solid rgb(82, 82, 82) 2px;
 }
 
 .input-element:focus {

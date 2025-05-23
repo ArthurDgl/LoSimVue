@@ -422,7 +422,7 @@ export default {
 
             const idMap = {}
 
-            circuitBlueprint.instances.forEach(instance => {
+            circuitBlueprint.instances.sort((comp1, comp2) => {return comp1.position.y - comp2.position.y}).forEach(instance => {
                 const newComponent = this.newLibraryComponent(instance.libraryId, instance.name, instance.position);
                 behavior.circuit.components.push(newComponent);
                 idMap[instance.id] = newComponent;
@@ -959,6 +959,10 @@ export default {
                         type: "INPUT",
                         key: "color",
                         placeholder: "Enter circuit color"
+                    },
+                    {
+                        type: "COLOR_DISPLAY",
+                        key: "color"
                     }
                 ],
                 options: [
@@ -970,8 +974,8 @@ export default {
                                 this.saveCurrentCircuit(popup.data.name, popup.data.color);
                             }
                             else {
-                                if (popup.contents.length < 3) popup.contents.push({});
-                                popup.contents[2] = {
+                                if (popup.contents.length < 4) popup.contents.push({});
+                                popup.contents[3] = {
                                     type: "TEXT",
                                     text: "Missing name or Invalid color format : use #12AB34 or rgb(12, AB, 34)"
                                 }
