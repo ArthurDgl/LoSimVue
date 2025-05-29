@@ -39,14 +39,17 @@ Attempting to connect two pins that are **already connected** will **remove the 
 ### Saving Components
 To save current circuit into its own component :\
 Press the **floppy disk** button at the **top of the screen**\
-Then enter the necessary information and press **Save**
+Then enter the necessary information and press **Save**\
+**Pins** are ordered top down and their **labels** are shown
+
+### Editing Properties
+To edit a component's properties, **right-click** using the **pointer** tool\
+Then click **Apply**
 
 ### Popups
 Some actions trigger popups to give additional information or give choices
 
 # Planned Features
-
-### Pin top-down order and labels
 
 ### Edit existing components
 
