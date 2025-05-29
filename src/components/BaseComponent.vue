@@ -116,8 +116,7 @@ export default {
             if (this.componentData.temporary) {
                 this.$parent.placeTemporaryComponent();
             }
-
-            if (event.button == 0 && this.$parent.getMouseTool() === "pointer") {
+            else if (event.button == 0 && this.$parent.getMouseTool() === "pointer") {
                 this.componentData.behavior.onPoke(this.componentData.behavior);
             }
         },
@@ -145,6 +144,67 @@ export default {
             this.updateOutputs(updateCount);
             this.updateRendering();
         },
+        openPropertiesPopup(event) {
+            event.preventDefault();
+
+            const title = "Properties";
+
+            const data = {};
+            const contents = [
+                {
+                    type: "TEXT",
+                    text: "label :"
+                },
+                {
+                    type: "INPUT",
+                    key: "label",
+                    placeholder: "Enter label",
+                    strictFormat: true
+                }
+            ];
+            if (this.componentData.behavior.label) data.label = this.componentData.behavior.label;
+            Object.keys(this.componentData.behavior.properties).forEach(key => {
+                data[key] = this.componentData.behavior.properties[key];
+                contents.push({
+                    type: "TEXT",
+                    text: key + " :",
+                });
+                contents.push({
+                    type: "INPUT",
+                    key: key,
+                    placeholder: "Enter " + key,
+                });
+            });
+
+            this.$parent.$parent.closePopupsByTitle(title);2
+
+            this.$parent.$parent.addPopup({
+                title: title,
+                position: {x: event.clientX + 10, y: event.clientY + 10},
+                data: data,
+                contents: contents,
+                options: [
+                    {
+                        color: "#6688FA",
+                        name: "Apply",
+                        onClick: (popup, app) => {
+                            if (popup.data.label && popup.data.label !== "") {
+                                this.componentData.behavior.label = popup.data.label;
+                            }
+                            for (let i = 1; i < popup.contents.length; i++) {
+                                const content = popup.contents[i];
+                                this.componentData.behavior.properties[content.key] = popup.data[content.key];
+                            }
+                        }
+                    },
+                    {
+                        color: "#FA5544",
+                        name: "Cancel",
+                        onClick: (popup, app) => {}
+                    }
+                ]
+            });
+        }
     },
     mounted() {
         this.componentData.vueComponent = this;
@@ -175,6 +235,7 @@ export default {
         
         @click="this.handleClick"
         @mousedown="this.startDrag"
+        @contextmenu="this.openPropertiesPopup"
         >
 
         <div class="pin input" v-for="(pin, index) in this.componentData.pins.inputs"
@@ -185,6 +246,8 @@ export default {
                 'width':`${2 * this.pinRadius}px`,
                 'height':`${2 * this.pinRadius}px`,
                 'background-color':`${(pin.state ? 'crimson' : 'rgb(80, 9, 23)')}`,
+                'border-width':`${this.borderWidth / 2}px`,
+                'color':`${this.$parent.lightenColor(this.color, -20)}`
             }"
             :class="{
                 'pin-highlight': this.$parent.getMouseTool() === 'crosshair' && this.$parent.selectedOutput
@@ -192,6 +255,7 @@ export default {
             ref="in"
             @click="this.$parent.handlePinClick(pin)"
         >
+        <div class="input-pin-label" v-if="pin.label && pin.label !== ''">{{ pin.label }}</div>
         </div>
 
         <div class="pin output" v-for="(pin, index) in this.componentData.pins.outputs"
@@ -202,7 +266,8 @@ export default {
                 'width':`${2 * this.pinRadius}px`,
                 'height':`${2 * this.pinRadius}px`,
                 'background-color':`${(pin.state ? 'crimson' : 'rgb(80, 9, 23)')}`,
-                'border-width':`${this.borderWidth / 2}px`
+                'border-width':`${this.borderWidth / 2}px`,
+                'color':`${this.$parent.lightenColor(this.color, -20)}`
             }"
             :class="{
                 'selected-output': this.$parent.isPinSelected(pin),
@@ -211,9 +276,11 @@ export default {
             ref="out"
             @click="this.$parent.handlePinClick(pin)"
         >
+        <div class="output-pin-label" v-if="pin.label && pin.label !== ''">{{ pin.label }}</div>
         </div>
 
         <div class="name">{{ this.text }}</div>
+        <div class="label" v-if="this.componentData.behavior.label && this.componentData.behavior.label !== ''">{{ this.componentData.behavior.label }}</div>
     </div>
 </template>
 
@@ -246,5 +313,33 @@ export default {
     transform: translate(-50%, -50%);
     user-select: none;
     color: aliceblue;
+}
+
+.label {
+    position: absolute;
+    margin: 0;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    user-select: none;
+    color: gray;
+}
+
+.input-pin-label {
+    position: relative;
+    margin: 0;
+    top: 50%;
+    left: 100%;
+    transform: translateY(-50%) scale(75%);
+    user-select: none;
+}
+
+.output-pin-label {
+    position: absolute;
+    margin: 0;
+    top: 50%;
+    left: 0%;
+    transform: translate(-100%, -50%) scale(75%);
+    user-select: none;
 }
 </style>

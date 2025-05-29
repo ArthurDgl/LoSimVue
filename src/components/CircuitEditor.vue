@@ -424,6 +424,7 @@ export default {
 
             circuitBlueprint.instances.sort((comp1, comp2) => {return comp1.position.y - comp2.position.y}).forEach(instance => {
                 const newComponent = this.newLibraryComponent(instance.libraryId, instance.name, instance.position);
+                if (instance.label) newComponent.behavior.label = instance.label;
                 behavior.circuit.components.push(newComponent);
                 idMap[instance.id] = newComponent;
                 if (newComponent.behavior.libraryId == 2) {
@@ -453,6 +454,14 @@ export default {
                 behavior.circuit.wires.push(wire);
             });
         },
+        setCircuitPinLabels(component) {
+            component.behavior.circuit.inputReferences.forEach((inputReference, index) => {
+                component.pins.inputs[index].label = inputReference.behavior.label;
+            });
+            component.behavior.circuit.outputReferences.forEach((outputReference, index) => {
+                component.pins.outputs[index].label = outputReference.behavior.label;
+            });
+        },
         newLibraryComponent(libraryId, componentName, position) {
             let behavior = {
                 state: {},
@@ -466,6 +475,9 @@ export default {
             behavior.libraryId = libraryId;
             behavior.defaultColor = libraryComponent.color;
             behavior.defaultBorderColor = libraryComponent.borderColor;
+            behavior.label = "";
+            if (libraryComponent.label) behavior.label = libraryComponent.label;
+            behavior.properties = {};
 
             if (libraryComponent.circuit) {
                 this.parseCircuit(libraryComponent.circuit, behavior);
@@ -497,6 +509,8 @@ export default {
             for (let i = 0; i < behavior.outputs; i++) {
                 this.addComponentPin(component, "OUTPUT");
             }
+
+            if (libraryComponent.circuit) this.setCircuitPinLabels(component);
 
             return component;
         },
@@ -1016,6 +1030,7 @@ export default {
                             id: component.id,
                             libraryId: component.behavior.libraryId,
                             name: component.behavior.name,
+                            label: component.behavior.label,
                             position: {
                                 x: component.position.x,
                                 y: component.position.y
@@ -1038,8 +1053,6 @@ export default {
                     })
                 }
             };
-
-            console.log(newLibraryComponent);
 
             this.$parent.addProjectComponent(newLibraryComponent);
             this.clearEditor();

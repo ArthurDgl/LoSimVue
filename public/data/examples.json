@@ -73,6 +73,7 @@
                     "id": 6,
                     "libraryId": 2,
                     "name": "IN",
+                    "label": "SEL",
                     "position": {
                         "x": 0,
                         "y": 300
@@ -82,6 +83,7 @@
                     "id": 7,
                     "libraryId": 2,
                     "name": "OUT",
+                    "label": "O",
                     "position": {
                         "x": 400,
                         "y": 150
